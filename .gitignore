@@ -1,0 +1,8 @@
+*.jpg
+*.png
+*.pgm
+*.bmp
+Debug/
+moc/
+backupip/
+obj/
