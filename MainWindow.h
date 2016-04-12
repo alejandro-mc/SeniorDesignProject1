@@ -75,12 +75,18 @@ protected:
 private:
 	QMenu*			m_menuFile;
 	QMenu*			m_menuPtOps;
+    QMenu*          m_menuNeighborOps;
 	QAction*		m_actionOpen;
 	QAction*		m_actionQuit;
+
+    //actions for point operations menu
 	QAction*		m_actionThreshold;
 	QAction*		m_actionContrast ;
     QAction*        m_actionQuantize ;
     QAction*        m_actionHistStretch;
+
+    //actions for Neighbohood operations menu
+    QAction*        m_actionBlurSharpen;
 
 	// homework objects
 	ImageFilter*		m_imageFilterType[MAXFILTERS];

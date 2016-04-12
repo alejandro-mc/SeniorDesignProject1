@@ -37,7 +37,8 @@ HEADERS +=	MainWindow.h	\
 		Threshold.h	\
 		Contrast.h	\
 		Quantize.h	\
-		HistStretch.h	
+		HistStretch.h	\
+		Blur_Sharpen.h	\
 
 		
 SOURCES +=	main.cpp	\ 
@@ -48,7 +49,8 @@ SOURCES +=	main.cpp	\
 		Threshold.cpp	\
 		Contrast.cpp	\
 		Quantize.cpp	\
-		HistStretch.cpp
+		HistStretch.cpp	\
+		Blur_Sharpen.cpp\
 
 
 unix:!macx: LIBS += -L$$PWD/IP/linux/lib/ -lIP_d

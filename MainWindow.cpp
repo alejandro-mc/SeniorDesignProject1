@@ -13,10 +13,11 @@
 #include "Contrast.h"
 #include "Quantize.h"
 #include "HistStretch.h"
+#include "Blur_Sharpen.h"
 
 using namespace IP;
 
-enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH};
+enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN};
 enum {RGB, R, G, B, GRAY};
 
 QString GroupBoxStyle = "QGroupBox {				\
@@ -89,6 +90,16 @@ MainWindow::createActions()
     m_actionHistStretch->setShortcut(tr("Ctrl+H"));
     m_actionHistStretch->setData(HISTSTRETCH);
 
+
+    ///////////////////////////////////
+    ///Neigborhood Ops Actions
+    ///////////////////////////////////
+
+    m_actionBlurSharpen = new QAction("&Blur/Sharpen",this);
+    m_actionBlurSharpen ->setShortcut(tr("Ctrl+B"));
+    m_actionBlurSharpen ->setData(BLURSHARPEN);
+
+
 	// one signal-slot connection for all actions;
 	// execute() will resolve which action was triggered
 	connect(menuBar(), SIGNAL(triggered(QAction*)), this, SLOT(execute(QAction*)));
@@ -116,8 +127,14 @@ MainWindow::createMenus()
     m_menuPtOps->addAction(m_actionQuantize );
     m_menuPtOps->addAction(m_actionHistStretch);
 
+    //Neighborhood Ops menu
+    m_menuNeighborOps = menuBar() ->addMenu("&Neighbor Ops");
+    m_menuNeighborOps ->addAction(m_actionBlurSharpen);
+
+
 	// disable the following menus until input image is read
-	m_menuPtOps->setEnabled(false);
+    m_menuPtOps->setEnabled(false);
+    m_menuNeighborOps->setEnabled(false);
 }
 
 
@@ -164,6 +181,7 @@ MainWindow::createGroupPanel()
     m_imageFilterType[CONTRAST ]    =   new Contrast;
     m_imageFilterType[QUANTIZE ]    =   new Quantize;
     m_imageFilterType[HISTSTRETCH]  =   new HistStretch;
+    m_imageFilterType[BLURSHARPEN]  =   new Blur_Sharpen;
 
 	// create a stacked widget to hold multiple control panels
 	m_stackWidgetPanels = new QStackedWidget;
@@ -174,6 +192,7 @@ MainWindow::createGroupPanel()
 	m_stackWidgetPanels->addWidget(m_imageFilterType[CONTRAST ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[QUANTIZE ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTSTRETCH ]->controlPanel());
+    m_stackWidgetPanels->addWidget(m_imageFilterType[BLURSHARPEN ]->controlPanel());
 
 	// display blank dummmy panel initially
 	m_stackWidgetPanels->setCurrentIndex(0);
@@ -448,6 +467,7 @@ MainWindow::open() {
 
 	// enable the following now that input image is read
 	m_menuPtOps	->setEnabled(true);
+    m_menuNeighborOps->setEnabled(true);
 	m_groupBoxPanels->setEnabled(true);
 }
 
