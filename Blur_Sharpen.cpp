@@ -21,7 +21,7 @@ extern MainWindow *g_mainWindowP;
 //
 Blur_Sharpen::Blur_Sharpen(QWidget *parent) : ImageFilter(parent)
 {
-    m_maxFilterDim = 11;
+    m_maxFilterDim = 99;
     m_minFilterDim = 1;
     //m_blurbuffer = new int[2];//initialize to junk
 }
@@ -46,7 +46,8 @@ Blur_Sharpen::applyFilter(ImagePtr I1, ImagePtr I2)
     int ysz = m_sliderFilterY->value();
 
     // error checking
-    if(xsz < m_minFilterDim || xsz > m_maxFilterDim || ysz < m_minFilterDim || ysz > m_maxFilterDim) return 0;
+    if(xsz < m_minFilterDim || xsz > m_maxFilterDim || ysz < m_minFilterDim
+                            || ysz > m_maxFilterDim) return 0;
 
     // apply filter
     blur(I1,xsz,ysz,I2);
@@ -79,14 +80,14 @@ Blur_Sharpen::controlPanel()
     m_sliderFilterX ->setSingleStep(2);
     m_sliderFilterX ->setMinimum(m_minFilterDim);
     m_sliderFilterX ->setMaximum(m_maxFilterDim);
-    m_sliderFilterX ->setValue  (5);
+    m_sliderFilterX ->setValue  (m_minFilterDim);
 
     // create x spinbox
     m_spinBoxFilterX = new QSpinBox(m_ctrlGrp);
     m_spinBoxFilterX ->setMinimum(m_minFilterDim);
     m_spinBoxFilterX ->setSingleStep(2);
     m_spinBoxFilterX ->setMaximum(m_maxFilterDim);
-    m_spinBoxFilterX ->setValue  (5);
+    m_spinBoxFilterX ->setValue  (m_minFilterDim);
 
     // create label y
     QLabel *ylabel = new QLabel;
@@ -156,12 +157,21 @@ Blur_Sharpen::controlPanel()
 void
 Blur_Sharpen::changeFilterX(int xsz)
 {
+    if(!(xsz & 1)){//if ysz is even
+        --xsz;
+    }
     m_sliderFilterX     ->  blockSignals(true);
     m_sliderFilterX     ->  setValue    (xsz );
     m_sliderFilterX     ->  blockSignals(false);
     m_spinBoxFilterX    ->  blockSignals(true);
     m_spinBoxFilterX    ->  setValue    (xsz );
     m_spinBoxFilterX    ->  blockSignals(false);
+
+    if(m_checkBoxSqr->isChecked())
+    {
+        m_sliderFilterY ->  setValue(xsz);
+        m_sliderFilterY ->  setValue(xsz);
+    }
 
     // apply filter to source image; save result in destination image
     applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
@@ -178,14 +188,24 @@ Blur_Sharpen::changeFilterX(int xsz)
 // Slot to process change in filter height.
 //
 void
-Blur_Sharpen::changeFilterY(int xsz)
+Blur_Sharpen::changeFilterY(int ysz)
 {
+
+    if(!(ysz & 1)){//if ysz is even
+        --ysz;
+    }
     m_sliderFilterY     ->  blockSignals(true);
-    m_sliderFilterY     ->  setValue    (xsz );
-    m_sliderFilterY     ->  blockSignals(false);
+    m_sliderFilterY     ->  setValue    (ysz );
     m_spinBoxFilterY    ->  blockSignals(true);
-    m_spinBoxFilterY    ->  setValue    (xsz );
+    m_spinBoxFilterY    ->  setValue    (ysz );
     m_spinBoxFilterY    ->  blockSignals(false);
+    m_sliderFilterY     ->  blockSignals(false);
+
+    if(m_checkBoxSqr->isChecked())
+    {
+        m_sliderFilterX ->  setValue(ysz);
+        m_sliderFilterX ->  setValue(ysz);
+    }
 
     // apply filter to source image; save result in destination image
     applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
@@ -201,6 +221,11 @@ Blur_Sharpen::changeFilterY(int xsz)
 //
 void Blur_Sharpen::toggleSquare(int e)
 {
+    if(e)
+    {
+        m_sliderFilterY->setValue(m_sliderFilterX->value());
+    }
+
     // apply filter to source image; save result in destination image
     applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
 
@@ -241,14 +266,13 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
     int width = in->width();
     int height = in->height();
     int total = width * height;
+    int neighborhood_size = xsz*ysz;
 
     int type;
-    ChannelPtr<uchar> p1, p3,tmpPtr,rowend, endd;
-    int* p2 = new int[total];//temp image ptr
-    int * p2reset = p2;
+    ChannelPtr<uchar> p1, p3,chstartp3,tmpPtr,rowend, endd;
     for(int ch = 0; IP_getChannel(in, ch, p1, type); ch++) {
         IP_getChannel(out,ch,p3,type);
-        p2 = p2reset;
+        chstartp3 = p3;
         endd = p1+total;
 
 
@@ -262,6 +286,7 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
         int * sadd;
         int * ssub;
         int* b;
+        int sum;
 
         ////for each row in input image
         tmpPtr = p1;
@@ -299,7 +324,7 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 
 
             /////copy blured pixels to tmpImg
-            int sum=0;
+            sum=0;
 
 
 
@@ -312,16 +337,16 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
                 sum += *sadd;//
             }
 
-            *p2 = (int) (sum / (float) xsz*ysz);//blur first fixel of the row
-            p2++;
+            *p3 = (int) (sum / (float) neighborhood_size);//blur first fixel of the row
+            p3++;
 
             //copy averaged pixel values to tmpImg
             for(;sadd < bufferend; ++sadd)
             {
                 sum = sum - *ssub + *sadd;
-                *p2 = (int) (sum / (float) xsz*ysz);
+                *p3 = (int) (sum / (float) neighborhood_size);
                 ssub++;//next element in the buffer
-                p2++;//next pixel
+                p3++;//next pixel
             }
 
             tmpPtr++;//go to the next row
@@ -330,26 +355,83 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
         delete [] m_blurbuffer;
         //END BLUR ROWS/////////////////////////////////////////////////////////////////////////////
 
+        p3 = chstartp3;//reset p3
 
         //BLUR COLUMNS////////////////////////////////////////////////////////////////////////
 
+        ///create padded buffer
+        m_blurbuffer = new int[height + ysz -1];
+        leftside = m_blurbuffer + ((ysz - 1) >>1);
+        bufferend = m_blurbuffer + height + ysz -1;
+
+
+        ////for each column in output image
+        rowend = chstartp3 + width;//rowend marks the end of the first row of the image channel
+        tmpPtr = chstartp3;//tmpPtr points to the top of a column, in this case to the first column
+        endd = chstartp3 + total;//endd points to location inmediatly after image channel
+        while(tmpPtr < rowend)
+        {
+            //b is the buffer pointer
+            /////create left pad
+            b = m_blurbuffer;
+            p3 = tmpPtr;//put p3 at the beggining of the column
+            while(b < leftside)
+            {
+                *b = *p3;
+                ++b;
+            }
+
+
+            /////copy image column to buffer
+            
+            while(p3 < endd)//when p3 is more than endd it is past the last element of the column.
+            {
+                *b = *p3;
+                b++;
+                p3+= width;//moves new image channel pointer p3 to next pixel in the current column
+            }
+
+
+            /////create right pad
+            p3-= width;//set channel pointer back to the bottom of the column
+            while(b < bufferend)
+            {
+                *b = *p3;
+                b++;
+            }
+
+
+            /////copy blured pixels back to image
+            p3 = tmpPtr;//reset pointer to begining of column to copy blured pixel from buffer to the column
+            sum=0;
+
+            //add fisrt neighborhood
+            ssub = m_blurbuffer;
+            sadd = m_blurbuffer;
+
+            for(;sadd < ysz + m_blurbuffer; sadd++){
+
+                sum += *sadd;//
+            }
+
+            *p3 = sum;//blur first fixel of the row
+            p3+=width;
+
+            //copy averaged pixel values to image
+            for(;sadd < bufferend; ++sadd)
+            {
+                sum = sum - *ssub + *sadd;
+                *p3 = sum;
+                ssub++;//next element in the buffer
+                p3+=width;//next pixel
+            }
+
+            tmpPtr++;//go to the next column
+        }
+
+        delete [] m_blurbuffer;
 
         //END BLUR COLUMNS ////////////////////////////////////////////////////////////////////////
-
-
-
-
-        //for now just copy the pixel to the image
-        p2 = p2reset;//reset p2
-
-
-
-        while(p2<p2reset+total)
-        {
-            *p3 = CLIP(*p2,0,255);
-            p2++;
-            p3++;
-        }
 
 
 

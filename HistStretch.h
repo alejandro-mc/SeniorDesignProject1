@@ -17,7 +17,8 @@ class HistStretch : public ImageFilter {
 	Q_OBJECT
 
 public:
-	HistStretch	(QWidget *parent = 0);		// constructor
+    HistStretch	(QWidget *parent = 0);	// constructor
+    ~HistStretch();                     // destructor
 	QGroupBox*	controlPanel	();		// create control panel
 	bool		applyFilter(ImagePtr, ImagePtr);// apply filter to input to init output
 	void		reset		();		// reset parameters

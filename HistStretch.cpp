@@ -372,10 +372,16 @@ HistStretch::stretch(ImagePtr I1, int min, int max, ImagePtr I2) {
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// HistStretch::~HistStretch:
+HistStretch::~HistStretch()
+{
+    if(m_Hist != NULL) delete [] m_Hist;
+}
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::reset:
+// HistStretch::reset:
 //
 // Reset parameters.
 //
