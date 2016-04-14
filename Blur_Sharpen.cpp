@@ -255,11 +255,26 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
     int total = width * height;
     int neighborhood_size = xsz*ysz;
 
+    int * tmpImg = new int[total];//temporary image to hold the horizontal pass values
+    int * tmpImgStart = tmpImg;//beginig address of temp image
+    int * tmpImgrowend;//points to the end of the current tmpImg row
+    int * tmpImgColptr;//points to the current column current column of the tmpImg being
+                       //being procesed during vertical pass
+
+    int * tmpImgEnd = tmpImgStart + total;//points to 1 int past the end of tmpImg
+
     int type;
-    ChannelPtr<uchar> p1, p3,chstartp3,tmpPtr,rowend, endd;
+
+    //p1: is the pointer to the current channel in the input image
+    //p3: is the ponter to the current channel in the output image
+    //p3colptr: int the current channel points to the columns of the output image
+    //          during vertical pass when averaging for pixels in the tmpImg
+    //          is finished and the result copied to the output image
+    //rowend: for each channel marks the end of the current row in the input image
+    //endd: for each channel marks the end of the channel in the input image
+    ChannelPtr<uchar> p1, p3,p3colptr,rowend, endd;
     for(int ch = 0; IP_getChannel(in, ch, p1, type); ch++) {
         IP_getChannel(out,ch,p3,type);
-        chstartp3 = p3;
         endd = p1+total;
 
 
@@ -270,15 +285,13 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
         int* leftside = m_blurbuffer + ((xsz - 1) >>1);
         int* bufferend = m_blurbuffer + width + xsz -1;
 
-        int * sadd;
-        int * ssub;
-        int* b;
-        int sum;
+        int * sadd;//will point to pixel to be added to the sum
+        int * ssub;//will point to pixel to be subtracted from the sum
+        int* b;//will point to buffer locations
+        int sum;//will hold the sum of the neighborhood pixels
 
         ////for each row in input image
-        tmpPtr = p1;
-
-        while(tmpPtr < endd)
+        while(p1 < endd)
         {
             //b is the buffer pointer
             /////create left pad
@@ -286,28 +299,27 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 
             while(b < leftside)
             {
-                *b = *tmpPtr;
+                *b = *p1;
                 ++b;
             }
 
 
             /////copy image row to buffer
-            rowend = tmpPtr + width;
-            while(tmpPtr < rowend)
+            rowend = p1 + width;
+            while(p1 < rowend)
             {
-                *b = *tmpPtr;
+                *b = *p1;
                 b++;
-                tmpPtr++;
+                p1++;
             }
 
             /////create right pad
-            tmpPtr--;//set pointer back to right end of row
+            p1--;//set pointer back to right end of row
             while(b < bufferend)
             {
-                *b = *tmpPtr;
+                *b = *p1;
                 b++;
             }
-            //tmpPtr++;
 
 
             /////copy blured pixels to tmpImg
@@ -324,25 +336,25 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
                 sum += *sadd;//
             }
 
-            *p3 = (int) (sum / (float) neighborhood_size);//blur first fixel of the row
-            p3++;
+            *tmpImg = sum;//blur first fixel of the row
+            tmpImg++;
 
             //copy averaged pixel values to tmpImg
             for(;sadd < bufferend; ++sadd)//
             {
                 sum = sum - *ssub + *sadd;
-                *p3 = (int) (sum / (float) neighborhood_size);
+                *tmpImg = sum;
                 ssub++;//next element in the buffer
-                p3++;//next pixel
+                tmpImg++;//next pixel
             }
 
-            tmpPtr++;//go to the next row
+            p1++;//go to the next row
         }
 
         delete [] m_blurbuffer;
         //END BLUR ROWS/////////////////////////////////////////////////////////////////////////////
 
-        p3 = chstartp3;//reset p3
+        tmpImg = tmpImgStart;//reset tmpImg pointer
 
         //BLUR COLUMNS////////////////////////////////////////////////////////////////////////
 
@@ -353,43 +365,44 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 
 
         ////for each column in output image
-        rowend = chstartp3 + width;//rowend marks the end of the first row of the image channel
-        tmpPtr = chstartp3;//tmpPtr points to the top of a column, in this case to the first column
-        endd = chstartp3 + total;//endd points to location inmediatly after image channel
-        while(tmpPtr < rowend)
+        tmpImgrowend = tmpImgStart + width;//rowend marks the end of the first row of the image channel
+        tmpImgColptr = tmpImgStart;//tmpPtr points to the top of a column, in this case to the first column
+        p3colptr = p3;
+        while(tmpImgColptr < tmpImgrowend)
         {
             //b is the buffer pointer
             /////create left pad
             b = m_blurbuffer;
-            p3 = tmpPtr;//put p3 at the beggining of the column
+            tmpImg = tmpImgColptr;//put tmpImg at the beggining of the column
             while(b < leftside)
             {
-                *b = *p3;
+                *b = *tmpImg;
                 ++b;
             }
 
 
             /////copy image column to buffer
             
-            while(p3 < endd)//when p3 is more than endd it is past the last element of the column.
+            while(tmpImg < tmpImgEnd)//when p3 is more than endd it is past the last element of the column.
             {
-                *b = *p3;
+                *b = *tmpImg;
                 b++;
-                p3+= width;//moves new image channel pointer p3 to next pixel in the current column
+                tmpImg+= width;//moves new image channel pointer p3 to next pixel in the current column
             }
 
 
             /////create right pad
-            p3-= width;//set channel pointer back to the bottom of the column
+            tmpImg-= width;//set channel pointer back to the bottom of the column
             while(b < bufferend)
             {
-                *b = *p3;
+                *b = *tmpImg;
                 b++;
             }
 
 
             /////copy blured pixels back to image
-            p3 = tmpPtr;//reset pointer to begining of column to copy blured pixel from buffer to the column
+            tmpImg = tmpImgColptr;//reset pointer to begining of column to copy blured pixel from buffer to the column
+            p3 = p3colptr;
             sum=0;
 
             //add fisrt neighborhood
@@ -401,19 +414,24 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
                 sum += *sadd;//
             }
 
-            *p3 = sum;//blur first fixel of the row
-            p3+=width;
+            //*tmpImg = sum;//blur first fixel of the row
+            *p3= sum / neighborhood_size;
+            p3+=width;//advance the
+            tmpImg+=width;
 
             //copy averaged pixel values to image
             for(;sadd < bufferend; ++sadd)
             {
                 sum = sum - *ssub + *sadd;
-                *p3 = sum;
+                //*tmpImg = sum;
+                *p3 = sum / neighborhood_size;
                 ssub++;//next element in the buffer
-                p3+=width;//next pixel
+                tmpImg+=width;//next pixel
+                p3+=width;
             }
 
-            tmpPtr++;//go to the next column
+            tmpImgColptr++;//go to the next column in the temp image
+            p3colptr++;//got to the next column in the output image
         }
 
         delete [] m_blurbuffer;
@@ -421,12 +439,14 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
         //END BLUR COLUMNS ////////////////////////////////////////////////////////////////////////
 
 
-
+        tmpImg = tmpImgStart; //reset tmpImg pointer
 
     }
 
-    //debuggin: verify correctness for a small portion of the image
 
+
+
+    delete [] tmpImg;
 
 }
 
