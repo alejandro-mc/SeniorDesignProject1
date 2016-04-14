@@ -233,19 +233,6 @@ void Blur_Sharpen::toggleSquare(int e)
     g_mainWindowP->displayOut();
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::toggleSharpen:
-//
-//
-//void Blur_Sharpen::toggleSharpen(int e)
-//{
-    // apply filter to source image; save result in destination image
-//    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
-
-    // display output
-//    g_mainWindowP->displayOut();
-//}
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Blur_Sharpen::blur:
@@ -341,7 +328,7 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
             p3++;
 
             //copy averaged pixel values to tmpImg
-            for(;sadd < bufferend; ++sadd)
+            for(;sadd < bufferend; ++sadd)//
             {
                 sum = sum - *ssub + *sadd;
                 *p3 = (int) (sum / (float) neighborhood_size);
@@ -437,6 +424,9 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 
 
     }
+
+    //debuggin: verify correctness for a small portion of the image
+
 
 }
 
