@@ -1,51 +1,42 @@
-#ifndef BLUR_SHARPEN_H
-#define BLUR_SHARPEN_H
+#ifndef SHARPEN_H
+#define SHARPEN_H
 
 #include "ImageFilter.h"
 
-class Blur_Sharpen : public ImageFilter {
+class Sharpen : public ImageFilter {
     Q_OBJECT
 
 public:
-    Blur_Sharpen	(QWidget *parent = 0);          // constructor
+    Sharpen	(QWidget *parent = 0);          // constructor
     QGroupBox*	controlPanel	();                 // create control panel
     bool		applyFilter(ImagePtr, ImagePtr);    // apply filter to input to init output
     void		reset		();                     // reset parameters
 
 protected:
     void blur(ImagePtr in, int xsz, int ysz, ImagePtr out);
-    //void sharpen(ImagePtr in, int sz, ImagePtr out);
+    void sharpen(ImagePtr in, int sz, double fctr, ImagePtr out);
 
 protected slots:
-    void changeFilterX(int);        //Slot to handle Filter width slider and spinbox
-    void changeFilterY(int);        //Slot to handle Filter height slider and spinbox
-    //void changeEdgIntensity(int);   //Slot to handle egde intensity slider with image sharpening
-
-    void toggleSquare(int);         //Slot to handle Square checkbox
-    //void toggleSharpen(int);        //Slot to handle sharpen checkbox
-
+    void changeKernelSize(int);        //Slot to handle Filter width slider and spinbox
+    void changeFactor(int);        //Slot to handle Filter height slider and spinbox
 
 private:
-    //blur controls
-    QSlider		*m_sliderFilterX ;  // Filter width slider
-    QSpinBox	*m_spinBoxFilterX;  // Filter width spinbox
-    QSlider     *m_sliderFilterY;   //Filter height slider
-    QSpinBox    *m_spinBoxFilterY;  //Filter height spinbox
+    //sharpen controls
+    QSlider		*m_sliderKernelSize ;  // Filter dimension slider
+    QSpinBox	*m_spinBoxKernelSize;  // Filter dimension spinbox
+    QSlider     *m_sliderFactor;   //Factor slider
+    QSpinBox    *m_spinBoxFactor;  //Factor height spinbox
 
-    QCheckBox   *m_checkBoxSqr;     // Check box to lock to keep FilterX = FilterY
-
-    //Sharpen Controls
-    //QCheckBox   *m_checkBoxSharpen;         //Toggle image sharpenning
-    //QSlider     *m_sliderEdgIntensity;      //Slider to control edge intensity
-    //QSlider     *m_spinBoxEdgntensity;      //Spinbox to control edge intensity
 
     // widgets and groupbox
-    QGroupBox	*m_ctrlGrp;	// Groupbox for panel
+    QGroupBox	*m_ctrlGrp;	     // Groupbox for panel
 
-    int          m_maxFilterDim; //maximum filter dimmesion
-    int         m_minFilterDim;//minimum filter dimmesion
+    int          m_maxKernelSize; //maximum filter dimmesion
+    int          m_minKernelSize; //minimum filter dimmesion
+    int          m_maxFactor;     //
+    int          m_minFactor;
 
     int         *m_blurbuffer;//blur buffer
 };
 
-#endif // BLUR_SHARPEN_H
+#endif // SHARPEN_H

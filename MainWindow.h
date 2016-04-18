@@ -87,6 +87,7 @@ private:
 
     //actions for Neighbohood operations menu
     QAction*        m_actionBlurSharpen;
+    QAction*        m_actionSharpen;
     QAction*        m_actionMedian;
 
 	// homework objects

@@ -15,10 +15,11 @@
 #include "HistStretch.h"
 #include "Blur_Sharpen.h"
 #include "Median.h"
+#include "Sharpen.h"
 
 using namespace IP;
 
-enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN,MEDIAN};
+enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN,SHARPEN,MEDIAN};
 enum {RGB, R, G, B, GRAY};
 
 QString GroupBoxStyle = "QGroupBox {				\
@@ -100,6 +101,10 @@ MainWindow::createActions()
     m_actionBlurSharpen ->setShortcut(tr("Ctrl+B"));
     m_actionBlurSharpen ->setData(BLURSHARPEN);
 
+    m_actionSharpen = new QAction("&Sharpen",this);
+    m_actionSharpen ->setShortcut(tr("Ctrl+S"));
+    m_actionSharpen ->setData(SHARPEN);
+
     m_actionMedian = new QAction("&Median",this);
     m_actionMedian ->setShortcut(tr("Ctrl+M"));
     m_actionMedian ->setData(MEDIAN);
@@ -135,6 +140,7 @@ MainWindow::createMenus()
     //Neighborhood Ops menu
     m_menuNeighborOps = menuBar() ->addMenu("&Neighbor Ops");
     m_menuNeighborOps ->addAction(m_actionBlurSharpen);
+    m_menuNeighborOps ->addAction(m_actionSharpen);
     m_menuNeighborOps ->addAction(m_actionMedian);
 
 
@@ -188,6 +194,7 @@ MainWindow::createGroupPanel()
     m_imageFilterType[QUANTIZE ]    =   new Quantize;
     m_imageFilterType[HISTSTRETCH]  =   new HistStretch;
     m_imageFilterType[BLURSHARPEN]  =   new Blur_Sharpen;
+    m_imageFilterType[SHARPEN]      =   new Sharpen;
     m_imageFilterType[MEDIAN]       =   new Median;
 
 	// create a stacked widget to hold multiple control panels
@@ -200,6 +207,7 @@ MainWindow::createGroupPanel()
     m_stackWidgetPanels->addWidget(m_imageFilterType[QUANTIZE ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTSTRETCH ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[BLURSHARPEN ]->controlPanel());
+    m_stackWidgetPanels->addWidget(m_imageFilterType[SHARPEN ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[MEDIAN ]->controlPanel());
 
 	// display blank dummmy panel initially
