@@ -14,10 +14,11 @@
 #include "Quantize.h"
 #include "HistStretch.h"
 #include "Blur_Sharpen.h"
+#include "Median.h"
 
 using namespace IP;
 
-enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN};
+enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN,MEDIAN};
 enum {RGB, R, G, B, GRAY};
 
 QString GroupBoxStyle = "QGroupBox {				\
@@ -92,12 +93,16 @@ MainWindow::createActions()
 
 
     ///////////////////////////////////
-    ///Neigborhood Ops Actions
+    //Neigborhood Ops Actions
     ///////////////////////////////////
 
     m_actionBlurSharpen = new QAction("&Blur/Sharpen",this);
     m_actionBlurSharpen ->setShortcut(tr("Ctrl+B"));
     m_actionBlurSharpen ->setData(BLURSHARPEN);
+
+    m_actionMedian = new QAction("&Median",this);
+    m_actionMedian ->setShortcut(tr("Ctrl+M"));
+    m_actionMedian ->setData(MEDIAN);
 
 
 	// one signal-slot connection for all actions;
@@ -130,6 +135,7 @@ MainWindow::createMenus()
     //Neighborhood Ops menu
     m_menuNeighborOps = menuBar() ->addMenu("&Neighbor Ops");
     m_menuNeighborOps ->addAction(m_actionBlurSharpen);
+    m_menuNeighborOps ->addAction(m_actionMedian);
 
 
 	// disable the following menus until input image is read
@@ -182,6 +188,7 @@ MainWindow::createGroupPanel()
     m_imageFilterType[QUANTIZE ]    =   new Quantize;
     m_imageFilterType[HISTSTRETCH]  =   new HistStretch;
     m_imageFilterType[BLURSHARPEN]  =   new Blur_Sharpen;
+    m_imageFilterType[MEDIAN]       =   new Median;
 
 	// create a stacked widget to hold multiple control panels
 	m_stackWidgetPanels = new QStackedWidget;
@@ -193,6 +200,7 @@ MainWindow::createGroupPanel()
     m_stackWidgetPanels->addWidget(m_imageFilterType[QUANTIZE ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTSTRETCH ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[BLURSHARPEN ]->controlPanel());
+    m_stackWidgetPanels->addWidget(m_imageFilterType[MEDIAN ]->controlPanel());
 
 	// display blank dummmy panel initially
 	m_stackWidgetPanels->setCurrentIndex(0);

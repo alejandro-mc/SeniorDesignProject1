@@ -39,6 +39,7 @@ HEADERS +=	MainWindow.h	\
 		Quantize.h	\
 		HistStretch.h	\
 		Blur_Sharpen.h	\
+		Median.h	\
 
 		
 SOURCES +=	main.cpp	\ 
@@ -51,7 +52,7 @@ SOURCES +=	main.cpp	\
 		Quantize.cpp	\
 		HistStretch.cpp	\
 		Blur_Sharpen.cpp\
-
+		Median.cpp	\
 
 unix:!macx: LIBS += -L$$PWD/IP/linux/lib/ -lIP_d
 
