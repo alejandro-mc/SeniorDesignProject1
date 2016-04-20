@@ -435,7 +435,7 @@ void Sharpen::sharpen(ImagePtr in, int sz,double fctr, ImagePtr out){
         //subtract and add
         for(;p1<endd;++p1)
         {
-            *p3 = CLIP(*p1 + CLIP(*p1 - *p2,0,MaxGray),0,MaxGray);
+            *p3 = CLIP(*p1 + CLIP(*p1 - *p2,0,MaxGray) * fctr,0,MaxGray);
             ++p2;
             ++p3;
         }
