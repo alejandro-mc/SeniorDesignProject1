@@ -45,8 +45,8 @@ Median::applyFilter(ImagePtr I1, ImagePtr I2)
     int avg_nbrs = m_sliderAvg_Nbrs->value();
 
     // error checking
-    if(sz < m_minKernel || sz > m_maxKernel || avg_nbrs < m_minKernel
-                            || avg_nbrs > ((m_maxKernel * m_maxKernel) >> 1)) return 0;
+    if(sz < m_minKernel || sz > m_maxKernel || avg_nbrs < 0
+                            || avg_nbrs > (((sz * sz) -1 ) >> 1)) return 0;
 
     // apply filter
     median(I1,sz,avg_nbrs,I2);
@@ -97,16 +97,16 @@ Median::controlPanel()
     m_sliderAvg_Nbrs ->setTickPosition(QSlider::TicksBelow);
     m_sliderAvg_Nbrs ->setTickInterval(2);
     m_sliderAvg_Nbrs ->setSingleStep(2);
-    m_sliderAvg_Nbrs ->setMinimum(m_minKernel);
+    m_sliderAvg_Nbrs ->setMinimum(0);
     m_sliderAvg_Nbrs ->setMaximum(m_maxKernel);
-    m_sliderAvg_Nbrs ->setValue  (m_minKernel);
+    m_sliderAvg_Nbrs ->setValue  (0);
 
     // create AVG Neighbor spinbox
     m_spinBoxAvg_Nbrs = new QSpinBox(m_ctrlGrp);
-    m_spinBoxAvg_Nbrs ->setMinimum(m_minKernel);
+    m_spinBoxAvg_Nbrs ->setMinimum(0);
     m_spinBoxAvg_Nbrs ->setSingleStep(2);
     m_spinBoxAvg_Nbrs ->setMaximum(m_maxKernel);
-    m_spinBoxAvg_Nbrs ->setValue  (m_minKernel);
+    m_spinBoxAvg_Nbrs ->setValue  (0);
 
 
     // init signal/slot connections for filter size controls
@@ -146,12 +146,28 @@ Median::changeKernelDim(int sz)
     if(!(sz & 1)){//if ysz is even
         --sz;
     }
+
+    int tmp = m_sliderAvg_Nbrs->value();
+
+    while( ((tmp << 1) + 1) > (sz * sz)){
+        --tmp;
+    }
+
     m_sliderKernelDim     ->  blockSignals(true);
     m_sliderKernelDim     ->  setValue    (sz );
     m_sliderKernelDim     ->  blockSignals(false);
     m_spinBoxKernelDim    ->  blockSignals(true);
     m_spinBoxKernelDim    ->  setValue    (sz );
     m_spinBoxKernelDim    ->  blockSignals(false);
+
+
+    m_sliderAvg_Nbrs     ->  blockSignals(true);
+    m_sliderAvg_Nbrs     ->  setValue    (tmp );
+    m_sliderAvg_Nbrs     ->  blockSignals(false);
+    m_spinBoxAvg_Nbrs    ->  blockSignals(true);
+    m_spinBoxAvg_Nbrs    ->  setValue    (tmp );
+    m_spinBoxAvg_Nbrs    ->  blockSignals(false);
+
 
     // apply filter to source image; save result in destination image
     applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
@@ -168,6 +184,19 @@ Median::changeKernelDim(int sz)
 void
 Median::changeAvg_Nbrs(int avg_nbrs)
 {
+    int tmp = m_sliderKernelDim->value();
+
+    while( ((avg_nbrs << 1) + 1) > (tmp * tmp))
+    {
+        tmp += 2;
+    }
+
+    m_sliderKernelDim     ->  blockSignals(true);
+    m_sliderKernelDim     ->  setValue    (tmp );
+    m_sliderKernelDim     ->  blockSignals(false);
+    m_spinBoxKernelDim    ->  blockSignals(true);
+    m_spinBoxKernelDim    ->  setValue    (tmp );
+    m_spinBoxKernelDim    ->  blockSignals(false);
 
     m_sliderAvg_Nbrs     ->  blockSignals(true);
     m_sliderAvg_Nbrs     ->  setValue    (avg_nbrs );
@@ -204,7 +233,7 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
     int total = width * height;
     int neighborhood_size = sz*sz;
     int padsize = (sz-1)>>1;
-    uchar * sortedneighbors = new uchar[neighborhood_size];//will wold the sorted list of neighborhood pixels
+    uchar * sortedneighbors = new uchar[neighborhood_size];//will hold the sorted list of neighboring pixels
     int sum,mid,avgstart,avgend,add,sub;
     mid = (neighborhood_size-1) >> 1;
     avgstart = mid-avg_nbrs;
@@ -244,12 +273,13 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
         buffrow = m_scanlinebuffer;
         for(;buffrow < m_scanlinebuffer+padsize;++buffrow)
         {
-            std::memcpy(*buffrow,*(m_scanlinebuffer+padsize),sizeof(unsigned char)* (width + sz-1));
+            std::memcpy(*buffrow,*(m_scanlinebuffer+padsize),
+                        sizeof(unsigned char) * (width + sz-1));
         }
 
         buffrow = m_scanlinebuffer;
 
-        //PROCESS CHANNEL UNTIL NEW ROW IS OUTSIDE THE CHANNEL
+        //PROCESS CHANNEL UNTIL NEW ROW IS PASSED THE CURRENT CHANNEL
         //p1 = p1start;//reset the input channel pointer
         int row = 0;
         do{
@@ -308,7 +338,7 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
 
 
-            p1+=width;//move pointer to next row that will be dded to the circular buffer
+            p1+=width;//move pointer to next row that will be added to the circular buffer
             row++;//advance to mark row of circular buffer where the new input row will be copied
 
         }while(p1<endd);
@@ -316,20 +346,6 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
 
         //BOTTOM UP PASS (PROCESS CHANNEL ROWS FRPM ROW height-1 TO ROW (height - (sz -1)/2))
-
-/*
-        //for debuggin purposes display buffer content
-        uchar * buffpixel,*rowend;
-        for(int i =0;i<sz;++i)
-        {
-            buffpixel = m_scanlinebuffer[i]+padsize;
-            rowend = m_scanlinebuffer[i] + padsize + width;
-            for(;buffpixel < rowend;++buffpixel)
-            {
-                *p3 = *buffpixel;
-                ++p3;
-            }
-        }*/
 
 
     }
