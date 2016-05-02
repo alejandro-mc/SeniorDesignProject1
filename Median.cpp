@@ -250,10 +250,11 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
     //FOR EACH IMAGE CHANNEL
     int type;
-    ChannelPtr<uchar> p1,p1start, p3, endd;
+    ChannelPtr<uchar> p1,p1start, p3,p3end, endd;
     for(int ch = 0; IP_getChannel(in, ch, p1,type); ch++) {
         IP_getChannel(out,ch,p3,type);
         endd = p1+total;
+        p3end = p3+total;
         p1start =p1;
 
 
@@ -281,71 +282,36 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
         //PROCESS CHANNEL UNTIL NEW ROW IS PASSED THE CURRENT CHANNEL
         //p1 = p1start;//reset the input channel pointer
-        int row = 0;
-        do{
-
-            //GET ROW PIXEL VALUES AND PUT THEM IN THE OUTPUT IMAGE
-
-
-            //INITIALIZE HISTOGRAM for the first neighborhood of the row
-            //INIT HISTOGRAM TO 0
-            for(int i=0;i<MXGRAY;++i)
-            {
-                m_histogram[i] = 0;
-            }
-
-            for(int i=0;i<sz;++i)
-            {
-                for(int j=0;j<sz;++j)
-                {
-                    m_histogram[m_scanlinebuffer[i][j]]++;
-                }
-            }
-
-            //COMPUTE VALUE OF FIRST PIXEL BASED ON THE INITIAL HISTOGRAM
-            genSortedNbrs(sortedneighbors);
-
-            sum=0;
-            for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-                sum += sortedneighbors[i];
-            }
-            *p3 = sum / ((avg_nbrs<<1)+1);
-            ++p3;
-
-            //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
-            for (int i=padsize+1;i < padsize+width; ++i){
-                add = i + padsize;
-                sub = i - padsize -1;
-                //update histogram for new neighborhood
-                for (int j=0;j<sz;++j)
-                {
-                    ++m_histogram[m_scanlinebuffer[j][add]];
-                    --m_histogram[m_scanlinebuffer[j][sub]];
-                }
-
-                genSortedNbrs(sortedneighbors);
-
-                sum=0;
-                for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-                    sum += sortedneighbors[i];
-                }
-                *p3 = sum / ((avg_nbrs<<1)+1);
-                ++p3;
-            }
-
-            //
-            copypadded(m_scanlinebuffer[row%sz],p1,padsize,width);
-
-
-
-            p1+=width;//move pointer to next row that will be added to the circular buffer
-            row++;//advance to mark row of circular buffer where the new input row will be copied
-
-        }while(p1<endd);
+        processRowsTopDown(width,sz,avg_nbrs,p1,p3,endd);
 
 
 
         //BOTTOM UP PASS (PROCESS CHANNEL ROWS FRPM ROW height-1 TO ROW (height - (sz -1)/2))
+
+        //COPY ROWS FROM height-1 TO
+        buffrow = m_scanlinebuffer + padsize;
+        p1 = endd - width;//set source pointer to bigining of bottom row
+        for(int i=0;i<=padsize;++i)
+        {
+            copypadded(*buffrow,p1,padsize,width);
+            p1-=width;//move channel pointer to next row
+            ++buffrow;//move circular buffer pointer to the next row
+        }
+
+        //REPLICATE BOTTOM IMAGE ROW IN THE CIRCULAR BUFFER
+        buffrow = m_scanlinebuffer;
+        for(;buffrow < m_scanlinebuffer+padsize;++buffrow)
+        {
+            std::memcpy(*buffrow,*(m_scanlinebuffer+padsize),
+                        sizeof(unsigned char) * (width + sz-1));
+        }
+
+        buffrow = m_scanlinebuffer;
+
+        //PROCESS CHANNEL UNTIL NEW ROW IS PASSED THE CURRENT CHANNEL
+        //p1 = p1start;//reset the input channel pointer
+        processRowsBottomUp(width,sz,avg_nbrs,
+                            p1,p3end - width,endd - (width * (sz + 1)) -1);
 
 
     }
@@ -360,6 +326,167 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
     //delete sortedneighbors
     delete [] sortedneighbors;
+
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//Median::processRowsTopDown:
+//
+void Median::processRowsTopDown(int width,int sz,int avg_nbrs,
+                         ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd)
+{
+    int neighborhood_size = sz*sz;
+    int padsize = (sz-1)>>1;
+    uchar * sortedneighbors = new uchar[neighborhood_size];//will hold the sorted list
+                                                           //of neighboring pixels
+    int sum,mid,avgstart,avgend,add,sub;
+    mid = (neighborhood_size-1) >> 1;
+    avgstart = mid-avg_nbrs;
+    avgend = mid+avg_nbrs;
+
+
+    int row = 0;
+    do{
+
+        //GET ROW PIXEL VALUES AND PUT THEM IN THE OUTPUT IMAGE
+
+
+        //INITIALIZE HISTOGRAM for the first neighborhood of the row
+        //INIT HISTOGRAM TO 0
+        for(int i=0;i<MXGRAY;++i)
+        {
+            m_histogram[i] = 0;
+        }
+
+        for(int i=0;i<sz;++i)
+        {
+            for(int j=0;j<sz;++j)
+            {
+                m_histogram[m_scanlinebuffer[i][j]]++;
+            }
+        }
+
+        //COMPUTE VALUE OF FIRST PIXEL BASED ON THE INITIAL HISTOGRAM
+        genSortedNbrs(sortedneighbors);
+
+        sum=0;
+        for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
+            sum += sortedneighbors[i];
+        }
+        *p3 = sum / ((avg_nbrs<<1)+1);
+        ++p3;
+
+        //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
+        for (int i=padsize+1;i < padsize+width; ++i){
+            add = i + padsize;
+            sub = i - padsize -1;
+            //update histogram for new neighborhood
+            for (int j=0;j<sz;++j)
+            {
+                ++m_histogram[m_scanlinebuffer[j][add]];
+                --m_histogram[m_scanlinebuffer[j][sub]];
+            }
+
+            genSortedNbrs(sortedneighbors);
+
+            sum=0;
+            for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
+                sum += sortedneighbors[i];
+            }
+            *p3 = sum / ((avg_nbrs<<1)+1);
+            ++p3;
+        }
+
+        //
+        copypadded(m_scanlinebuffer[row%sz],p1,padsize,width);
+
+
+
+        p1+=width;//move pointer to next row that will be added to the circular buffer
+        row++;//advance to mark row of circular buffer where the new input row will be copied
+
+    }while(p1<endd);
+
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//Median::processRowsBottomUp:
+//
+void Median::processRowsBottomUp(int width,int sz,int avg_nbrs,
+                         ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd)
+{
+    int neighborhood_size = sz*sz;
+    int padsize = (sz-1)>>1;
+    uchar * sortedneighbors = new uchar[neighborhood_size];//will hold the sorted list
+                                                           //of neighboring pixels
+    int sum,mid,avgstart,avgend,add,sub;
+    mid = (neighborhood_size-1) >> 1;
+    avgstart = mid-avg_nbrs;
+    avgend = mid+avg_nbrs;
+
+
+    int row = 0;
+    do{
+
+        //GET ROW PIXEL VALUES AND PUT THEM IN THE OUTPUT IMAGE
+
+
+        //INITIALIZE HISTOGRAM for the first neighborhood of the row
+        //INIT HISTOGRAM TO 0
+        for(int i=0;i<MXGRAY;++i)
+        {
+            m_histogram[i] = 0;
+        }
+
+        for(int i=0;i<sz;++i)
+        {
+            for(int j=0;j<sz;++j)
+            {
+                m_histogram[m_scanlinebuffer[i][j]]++;
+            }
+        }
+
+        //COMPUTE VALUE OF FIRST PIXEL BASED ON THE INITIAL HISTOGRAM
+        genSortedNbrs(sortedneighbors);
+
+        sum=0;
+        for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
+            sum += sortedneighbors[i];
+        }
+        *p3 = sum / ((avg_nbrs<<1)+1);
+        ++p3;
+
+        //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
+        for (int i=padsize+1;i < padsize+width; ++i){
+            add = i + padsize;
+            sub = i - padsize -1;
+            //update histogram for new neighborhood
+            for (int j=0;j<sz;++j)
+            {
+                ++m_histogram[m_scanlinebuffer[j][add]];
+                --m_histogram[m_scanlinebuffer[j][sub]];
+            }
+
+            genSortedNbrs(sortedneighbors);
+
+            sum=0;
+            for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
+                sum += sortedneighbors[i];
+            }
+            *p3 = sum / ((avg_nbrs<<1)+1);
+            ++p3;
+        }
+        p3 -= (width << 1);//move p3 to begining of row above
+
+        //copy a new padded row to the circular buffer
+        copypadded(m_scanlinebuffer[row%sz],p1,padsize,width);
+
+
+
+        p1-=width;//move pointer to next row that will be added to the circular buffer
+        row++;//advance to mark row of circular buffer where the new input row will be copied
+
+    }while(!(p1<endd));
 
 }
 

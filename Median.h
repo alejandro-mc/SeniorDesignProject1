@@ -39,6 +39,14 @@ private:
                                   //of (img_width + KernelDim - 1) uchars
     unsigned int * m_histogram;   //histogram to sort neighborhood pixels
     void          genSortedNbrs(uchar*);//generates a list of sorted elements based on m_histogram
+
+    //once the circular buffer is initialized call this function to process the rows
+    //top-down or bottom-up
+    void          processRowsTopDown(int width,int sz,int avg_nbrs,
+                              ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd);
+
+    void          processRowsBottomUp(int width,int sz,int avg_nbrs,
+                              ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd);
 };
 
 #endif // MEDIAN_H
