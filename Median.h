@@ -45,10 +45,7 @@ private:
 
     //once the circular buffer is initialized call this function to process the rows
     //top-down or bottom-up
-    void          processRowsTopDown(int width,int sz,int avg_nbrs,
-                              ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd);
-
-    void          processRowsBottomUp(int width,int sz,int avg_nbrs,
+    void          processRows(int width,int sz,int avg_nbrs,
                               ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd);
 };
 

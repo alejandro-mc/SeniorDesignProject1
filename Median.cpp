@@ -43,13 +43,19 @@ Median::applyFilter(ImagePtr I1, ImagePtr I2)
     // get threshold value
     int sz = m_sliderKernelDim->value();
     int avg_nbrs = m_sliderAvg_Nbrs->value();
+    int iter = m_sliderIter->value() -1;//iter will determine the number of extra iterations
 
     // error checking
     if(sz < m_minKernel || sz > m_maxKernel || avg_nbrs < 0
                             || avg_nbrs > (((sz * sz) -1 ) >> 1)) return 0;
 
     // apply filter
-    median(I1,sz,avg_nbrs,I2);
+    median(I1,sz,avg_nbrs,I2);//first iteration requires the source image
+
+    for(iter;iter>0;--iter)
+    {
+        median(I2,sz,avg_nbrs,I2);//the extra iterations are performed on the output image
+    }
 
     return 1;
 }
@@ -119,14 +125,14 @@ Median::controlPanel()
     m_sliderIter ->setTickInterval(1);
     m_sliderIter ->setSingleStep(1);
     m_sliderIter ->setMinimum(1);
-    m_sliderIter ->setMaximum(5);
+    m_sliderIter ->setMaximum(10);
     m_sliderIter ->setValue  (1);
 
     // create Iterations spinbox
     m_spinBoxIter = new QSpinBox(m_ctrlGrp);
     m_spinBoxIter ->setMinimum(1);
     m_spinBoxIter ->setSingleStep(1);
-    m_spinBoxIter ->setMaximum(5);
+    m_spinBoxIter ->setMaximum(10);
     m_spinBoxIter ->setValue  (1);
 
 
@@ -311,8 +317,6 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
         p3end = p3+total;
         p1start =p1;
 
-
-        //TOP DOWN PASS (PROCESS CHANNEL ROWS FROM ROW ZERO TO ROW (height- 1 - (sz -1)/2) )
         //INITIALIZE BUFFER (COPY ROWS NEEDED TO PROCESS THE FIRST ROW)
 
         //COPY ROWS FROM 0 TO (sz-1 / 2)
@@ -334,38 +338,8 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
         buffrow = m_scanlinebuffer;
 
-        //PROCESS CHANNEL UNTIL NEW ROW IS PASSED THE CURRENT CHANNEL
-        //p1 = p1start;//reset the input channel pointer
-        processRowsTopDown(width,sz,avg_nbrs,p1,p3,endd);
-
-
-
-        //BOTTOM UP PASS (PROCESS CHANNEL ROWS FRPM ROW height-1 TO ROW (height - (sz -1)/2))
-
-        //COPY ROWS FROM height-1 TO
-        buffrow = m_scanlinebuffer + padsize;
-        p1 = endd - width;//set source pointer to bigining of bottom row
-        for(int i=0;i<=padsize;++i)
-        {
-            copypadded(*buffrow,p1,padsize,width);
-            p1-=width;//move channel pointer to next row
-            ++buffrow;//move circular buffer pointer to the next row
-        }
-
-        //REPLICATE BOTTOM IMAGE ROW IN THE CIRCULAR BUFFER
-        buffrow = m_scanlinebuffer;
-        for(;buffrow < m_scanlinebuffer+padsize;++buffrow)
-        {
-            std::memcpy(*buffrow,*(m_scanlinebuffer+padsize),
-                        sizeof(unsigned char) * (width + sz-1));
-        }
-
-        buffrow = m_scanlinebuffer;
-
-        //PROCESS CHANNEL UNTIL NEW ROW IS PASSED THE CURRENT CHANNEL
-        //p1 = p1start;//reset the input channel pointer
-        processRowsBottomUp(width,sz,avg_nbrs,
-                            p1,p3end - width,endd - (width * (sz + 1)) -1);
+        //PROCESS CHANNEL ROWS
+        processRows(width,sz,avg_nbrs,p1,p3,endd);
 
 
     }
@@ -384,9 +358,9 @@ void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//Median::processRowsTopDown:
+//Median::processRows:
 //
-void Median::processRowsTopDown(int width,int sz,int avg_nbrs,
+void Median::processRows(int width,int sz,int avg_nbrs,
                          ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd)
 {
     int neighborhood_size = sz*sz;
@@ -461,27 +435,9 @@ void Median::processRowsTopDown(int width,int sz,int avg_nbrs,
 
     }while(p1<endd);
 
-}
+    p1-=width;
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//Median::processRowsBottomUp:
-//
-void Median::processRowsBottomUp(int width,int sz,int avg_nbrs,
-                         ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd)
-{
-    int neighborhood_size = sz*sz;
-    int padsize = (sz-1)>>1;
-    uchar * sortedneighbors = new uchar[neighborhood_size];//will hold the sorted list
-                                                           //of neighboring pixels
-    int sum,mid,avgstart,avgend,add,sub;
-    mid = (neighborhood_size-1) >> 1;
-    avgstart = mid-avg_nbrs;
-    avgend = mid+avg_nbrs;
-
-
-    int row = 0;
-    do{
-
+    for(int i=0;i<=padsize;++i){
         //GET ROW PIXEL VALUES AND PUT THEM IN THE OUTPUT IMAGE
 
 
@@ -530,19 +486,15 @@ void Median::processRowsBottomUp(int width,int sz,int avg_nbrs,
             *p3 = sum / ((avg_nbrs<<1)+1);
             ++p3;
         }
-        p3 -= (width << 1);//move p3 to begining of row above
 
-        //copy a new padded row to the circular buffer
+        //
         copypadded(m_scanlinebuffer[row%sz],p1,padsize,width);
 
-
-
-        p1-=width;//move pointer to next row that will be added to the circular buffer
-        row++;//advance to mark row of circular buffer where the new input row will be copied
-
-    }while(!(p1<endd));
+        row++;
+    }
 
 }
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
