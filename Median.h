@@ -18,15 +18,18 @@ protected:
     void copypadded(unsigned char*,ChannelPtr<uchar>,int,int);
 
 protected slots:
-    void changeKernelDim(int);        //Slot to handle kernel dimension slider and spinbox
-    void changeAvg_Nbrs(int);        //Slot to handle avg_nbr slider and spinbox
+    void changeKernelDim(int);          // Slot to handle kernel dimension slider and spinbox
+    void changeAvg_Nbrs(int);           // Slot to handle avg_nbr slider and spinbox
+    void changeIter(int);              // Slot to handle iteration slider and spinbox changes
 
 private:
-    //blur controls
-    QSlider		*m_sliderKernelDim ;  // Kernel dimension slider
-    QSpinBox	*m_spinBoxKernelDim;  // Kernel dimension spinbox
-    QSlider     *m_sliderAvg_Nbrs;   //Filter height slider
-    QSpinBox    *m_spinBoxAvg_Nbrs;  //Filter height spinbox
+    //median filter controls
+    QSlider		*m_sliderKernelDim ;    // Kernel dimension slider
+    QSpinBox	*m_spinBoxKernelDim;    // Kernel dimension spinbox
+    QSlider     *m_sliderAvg_Nbrs;      // Slider to control number of neighbors to average
+    QSpinBox    *m_spinBoxAvg_Nbrs;     // Spinbox to control nuber of neighbors to average
+    QSlider     *m_sliderIter;          // Slider to control iterations to give an oil painting effect
+    QSpinBox    *m_spinBoxIter;         // Spinbox to control iterations
 
     // widgets and groupbox
     QGroupBox	*m_ctrlGrp;	// Groupbox for panel

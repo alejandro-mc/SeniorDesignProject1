@@ -57,7 +57,7 @@ Median::applyFilter(ImagePtr I1, ImagePtr I2)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::createGroupBox:
+// Median::createGroupBox:
 //
 // Create group box for control panel.
 //
@@ -69,8 +69,8 @@ Median::controlPanel()
 
     // init widgets
     // create label Filter Size
-    QLabel *fsizelabel = new QLabel;
-    fsizelabel->setText(QString("Filter Size: "));
+    QLabel *labelfsize = new QLabel;
+    labelfsize->setText(QString("Filter Size: "));
 
     // create Filter Size slider
     m_sliderKernelDim = new QSlider(Qt::Horizontal, m_ctrlGrp);
@@ -89,8 +89,8 @@ Median::controlPanel()
     m_spinBoxKernelDim ->setValue  (m_minKernel);
 
     // create label y
-    QLabel *avgnbrslabel = new QLabel;
-    avgnbrslabel->setText(QString("AVG Neihbors:"));
+    QLabel *labelavgnbrs = new QLabel;
+    labelavgnbrs->setText(QString("AVG Neihbors:"));
 
     // create AVG Neighbor Slider
     m_sliderAvg_Nbrs = new QSlider(Qt::Horizontal, m_ctrlGrp);
@@ -109,6 +109,28 @@ Median::controlPanel()
     m_spinBoxAvg_Nbrs ->setValue  (0);
 
 
+    // create label for iterations
+    QLabel *labelIter = new QLabel;
+    labelIter->setText(QString("Iterations:"));
+
+    // create Iterations Slider
+    m_sliderIter = new QSlider(Qt::Horizontal, m_ctrlGrp);
+    m_sliderIter ->setTickPosition(QSlider::TicksBelow);
+    m_sliderIter ->setTickInterval(1);
+    m_sliderIter ->setSingleStep(1);
+    m_sliderIter ->setMinimum(1);
+    m_sliderIter ->setMaximum(5);
+    m_sliderIter ->setValue  (1);
+
+    // create Iterations spinbox
+    m_spinBoxIter = new QSpinBox(m_ctrlGrp);
+    m_spinBoxIter ->setMinimum(1);
+    m_spinBoxIter ->setSingleStep(1);
+    m_spinBoxIter ->setMaximum(5);
+    m_spinBoxIter ->setValue  (1);
+
+
+
     // init signal/slot connections for filter size controls
     connect(m_sliderKernelDim , SIGNAL(valueChanged(int)), this, SLOT(changeKernelDim (int)));
     connect(m_spinBoxKernelDim, SIGNAL(valueChanged(int)), this, SLOT(changeKernelDim(int)));
@@ -116,16 +138,24 @@ Median::controlPanel()
     connect(m_sliderAvg_Nbrs , SIGNAL(valueChanged(int)), this, SLOT(changeAvg_Nbrs(int)));
     connect(m_spinBoxAvg_Nbrs , SIGNAL(valueChanged(int)), this, SLOT(changeAvg_Nbrs(int)));
 
+    connect(m_sliderIter , SIGNAL(valueChanged(int)), this, SLOT(changeIter(int)));
+    connect(m_spinBoxIter , SIGNAL(valueChanged(int)), this, SLOT(changeIter(int)));
+
 
     // assemble dialog
     QGridLayout *layout = new QGridLayout;
-    layout->addWidget(  fsizelabel        , 0, 0);
+    layout->addWidget(  labelfsize        , 0, 0);
     layout->addWidget(m_sliderKernelDim   , 0, 1);
     layout->addWidget(m_spinBoxKernelDim  , 0, 2);
 
-    layout->addWidget(  avgnbrslabel      , 1, 0);
+    layout->addWidget(  labelavgnbrs      , 1, 0);
     layout->addWidget(m_sliderAvg_Nbrs    , 1, 1);
     layout->addWidget(m_spinBoxAvg_Nbrs   , 1, 2);
+
+    layout->addWidget(  labelIter         , 2, 0);
+    layout->addWidget(m_sliderIter        , 2, 1);
+    layout->addWidget(m_spinBoxIter       , 2, 2);
+
 
     // assign layout to group box
     m_ctrlGrp->setLayout(layout);
@@ -177,7 +207,7 @@ Median::changeKernelDim(int sz)
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::changeKernelDim:
+// Median::changeKernelDim:
 //
 // Slot to process change in filter width.
 //
@@ -211,6 +241,30 @@ Median::changeAvg_Nbrs(int avg_nbrs)
     // display output
     g_mainWindowP->displayOut();
 }
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Median::changeIter:
+//
+// Slot to process change number of iterations.
+//
+void
+Median::changeIter(int iter)
+{
+
+    m_sliderIter     ->  blockSignals(true);
+    m_sliderIter     ->  setValue    (iter );
+    m_sliderIter     ->  blockSignals(false);
+    m_spinBoxIter    ->  blockSignals(true);
+    m_spinBoxIter    ->  setValue    (iter );
+    m_spinBoxIter    ->  blockSignals(false);
+
+    // apply filter to source image; save result in destination image
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
+}
+
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
