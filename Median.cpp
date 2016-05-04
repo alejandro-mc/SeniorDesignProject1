@@ -365,12 +365,9 @@ void Median::processRows(int width,int sz,int avg_nbrs,
 {
     int neighborhood_size = sz*sz;
     int padsize = (sz-1)>>1;
-    uchar * sortedneighbors = new uchar[neighborhood_size];//will hold the sorted list
-                                                           //of neighboring pixels
-    int sum,mid,avgstart,avgend,add,sub;
-    mid = (neighborhood_size-1) >> 1;
-    avgstart = mid-avg_nbrs;
-    avgend = mid+avg_nbrs;
+    int add,sub,avg;
+    //avgstart = mid-avg_nbrs;
+    //avgend = mid+avg_nbrs;
 
 
     int row = 0;
@@ -395,13 +392,10 @@ void Median::processRows(int width,int sz,int avg_nbrs,
         }
 
         //COMPUTE VALUE OF FIRST PIXEL BASED ON THE INITIAL HISTOGRAM
-        genSortedNbrs(sortedneighbors);
 
-        sum=0;
-        for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-            sum += sortedneighbors[i];
-        }
-        *p3 = sum / ((avg_nbrs<<1)+1);
+        getAvg(neighborhood_size,avg_nbrs,&avg);
+
+        *p3 = avg;
         ++p3;
 
         //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
@@ -415,13 +409,9 @@ void Median::processRows(int width,int sz,int avg_nbrs,
                 --m_histogram[m_scanlinebuffer[j][sub]];
             }
 
-            genSortedNbrs(sortedneighbors);
+            getAvg(neighborhood_size,avg_nbrs,&avg);
 
-            sum=0;
-            for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-                sum += sortedneighbors[i];
-            }
-            *p3 = sum / ((avg_nbrs<<1)+1);
+            *p3 = avg;
             ++p3;
         }
 
@@ -457,13 +447,10 @@ void Median::processRows(int width,int sz,int avg_nbrs,
         }
 
         //COMPUTE VALUE OF FIRST PIXEL BASED ON THE INITIAL HISTOGRAM
-        genSortedNbrs(sortedneighbors);
 
-        sum=0;
-        for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-            sum += sortedneighbors[i];
-        }
-        *p3 = sum / ((avg_nbrs<<1)+1);
+        getAvg(neighborhood_size,avg_nbrs,&avg);
+
+        *p3 = avg;
         ++p3;
 
         //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
@@ -477,13 +464,10 @@ void Median::processRows(int width,int sz,int avg_nbrs,
                 --m_histogram[m_scanlinebuffer[j][sub]];
             }
 
-            genSortedNbrs(sortedneighbors);
 
-            sum=0;
-            for(int i=avgstart;i<=avgend;++i){//compute average of neighbors
-                sum += sortedneighbors[i];
-            }
-            *p3 = sum / ((avg_nbrs<<1)+1);
+            getAvg(neighborhood_size,avg_nbrs,&avg);
+
+            *p3 = avg;
             ++p3;
         }
 
@@ -495,6 +479,44 @@ void Median::processRows(int width,int sz,int avg_nbrs,
 
 }
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//Median::getAvg:
+//
+void
+Median::getAvg(int neighborhood_size, int avgnbrs,int * avg){
+
+    int sum,median,items,i;
+    sum=0;
+    items=0;
+
+    //first find the median
+    median=-1;
+    do{
+        ++median;
+        items = m_histogram[median] + items;
+    }while((items << 1) < (neighborhood_size +1));
+
+    sum = median;
+    //end median
+
+    //compute avg
+
+
+    //get sum of neighbors below
+   // m_histogram[median]
+
+    //items = avgnbrs;
+    //i=median;
+    //while(items > 0)
+    //{
+    //    sum += m_histogram[];
+     //   --i;
+    //}
+
+
+    *avg = sum / ((avgnbrs >> 1) + 1);
+}
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

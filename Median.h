@@ -47,6 +47,8 @@ private:
     //top-down or bottom-up
     void          processRows(int width,int sz,int avg_nbrs,
                               ChannelPtr<uchar> p1,ChannelPtr<uchar> p3,ChannelPtr<uchar> endd);
+
+    void          getAvg(int neighborhood_size, int avgnbrs,int * avg);//
 };
 
 #endif // MEDIAN_H
