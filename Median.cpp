@@ -486,36 +486,50 @@ void Median::processRows(int width,int sz,int avg_nbrs,
 void
 Median::getAvg(int neighborhood_size, int avgnbrs,int * avg){
 
-    int sum,median,items,i;
+    int sum,median,items,i,iLB,iLA;
     sum=0;
     items=0;
 
-    //first find the median
+    iLB = avgnbrs;//items left before the median
+    iLA = avgnbrs;//items left after the median
+
+    //first find the median/////////////////////////
     median=-1;
     do{
         ++median;
-        items = m_histogram[median] + items;
+        items += m_histogram[median];
     }while((items << 1) < (neighborhood_size +1));
-
-    sum = median;
     //end median
 
-    //compute avg
+    //sum neighbors above and below median in the the bucket containing the median
+    sum = median * MIN(items - ((neighborhood_size + 1) >> 1),avgnbrs) +
+          median * MIN((((neighborhood_size - 1) >> 1) - (items - m_histogram[median]))  ,avgnbrs) +
+          median;
 
+    //compute avg///////////////
 
     //get sum of neighbors below
-   // m_histogram[median]
+    i = median - 1;
+    iLB -= (((neighborhood_size - 1) >> 1) - (items - m_histogram[median]));
+    while(iLB > 0 &&  i > -1)
+    {
+        sum += i * MIN(m_histogram[i],iLB);
+        iLB -= m_histogram[i];
+        --i;
+    }
 
-    //items = avgnbrs;
-    //i=median;
-    //while(items > 0)
-    //{
-    //    sum += m_histogram[];
-     //   --i;
-    //}
+    //get sum of neighbors above
+    i = median + 1;
+    iLA -= items - ((neighborhood_size + 1) >> 1);
+    while(iLA > 0 &&  i < MXGRAY)
+    {
+        sum += i * MIN(m_histogram[i],iLA);
+        iLA -= m_histogram[i];
+        ++i;
+    }
 
 
-    *avg = sum / ((avgnbrs >> 1) + 1);
+    *avg = sum / ((avgnbrs << 1) + 1);
 }
 
 
