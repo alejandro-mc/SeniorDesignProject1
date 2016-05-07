@@ -38,6 +38,7 @@ HEADERS +=	MainWindow.h	\
 		Contrast.h	\
 		Quantize.h	\
 		HistStretch.h	\
+		HistMatch.h	\
 		Blur_Sharpen.h	\
 		Median.h	\
 		Sharpen.h	\
@@ -52,6 +53,7 @@ SOURCES +=	main.cpp	\
 		Contrast.cpp	\
 		Quantize.cpp	\
 		HistStretch.cpp	\
+		HistMatch.cpp	\
 		Blur_Sharpen.cpp\
 		Median.cpp	\
 		Sharpen.cpp	\

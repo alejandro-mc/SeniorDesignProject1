@@ -84,6 +84,7 @@ private:
 	QAction*		m_actionContrast ;
     QAction*        m_actionQuantize ;
     QAction*        m_actionHistStretch;
+    QAction*        m_actionHistMatch;
 
     //actions for Neighbohood operations menu
     QAction*        m_actionBlurSharpen;

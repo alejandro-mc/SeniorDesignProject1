@@ -13,13 +13,14 @@
 #include "Contrast.h"
 #include "Quantize.h"
 #include "HistStretch.h"
+#include "HistMatch.h"
 #include "Blur_Sharpen.h"
 #include "Median.h"
 #include "Sharpen.h"
 
 using namespace IP;
 
-enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,BLURSHARPEN,SHARPEN,MEDIAN};
+enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,HISTMATCH,BLURSHARPEN,SHARPEN,MEDIAN};
 enum {RGB, R, G, B, GRAY};
 
 QString GroupBoxStyle = "QGroupBox {				\
@@ -92,6 +93,10 @@ MainWindow::createActions()
     m_actionHistStretch->setShortcut(tr("Ctrl+H"));
     m_actionHistStretch->setData(HISTSTRETCH);
 
+    m_actionHistMatch = new QAction("Histogram &Match", this);
+    m_actionHistMatch->setShortcut(tr("Ctrl+M"));
+    m_actionHistMatch->setData(HISTMATCH);
+
 
     ///////////////////////////////////
     //Neigborhood Ops Actions
@@ -136,6 +141,7 @@ MainWindow::createMenus()
 	m_menuPtOps->addAction(m_actionContrast );
     m_menuPtOps->addAction(m_actionQuantize );
     m_menuPtOps->addAction(m_actionHistStretch);
+    m_menuPtOps->addAction(m_actionHistMatch);
 
     //Neighborhood Ops menu
     m_menuNeighborOps = menuBar() ->addMenu("&Neighbor Ops");
@@ -193,6 +199,7 @@ MainWindow::createGroupPanel()
     m_imageFilterType[CONTRAST ]    =   new Contrast;
     m_imageFilterType[QUANTIZE ]    =   new Quantize;
     m_imageFilterType[HISTSTRETCH]  =   new HistStretch;
+    m_imageFilterType[HISTMATCH]    =   new HistMatch;
     m_imageFilterType[BLURSHARPEN]  =   new Blur_Sharpen;
     m_imageFilterType[SHARPEN]      =   new Sharpen;
     m_imageFilterType[MEDIAN]       =   new Median;
@@ -206,6 +213,7 @@ MainWindow::createGroupPanel()
 	m_stackWidgetPanels->addWidget(m_imageFilterType[CONTRAST ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[QUANTIZE ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTSTRETCH ]->controlPanel());
+    m_stackWidgetPanels->addWidget(m_imageFilterType[HISTMATCH ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[BLURSHARPEN ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[SHARPEN ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[MEDIAN ]->controlPanel());
