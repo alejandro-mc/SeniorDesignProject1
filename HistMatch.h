@@ -25,14 +25,13 @@ public:
 	void		reset		();		// reset parameters
 
 protected:
-    void stretch(ImagePtr I1, int min, int max, ImagePtr I2);
-    void  match(ImagePtr I1,unsigned int * histo,ImagePtr I2);
+    void  match(ImagePtr,unsigned int *,ImagePtr);
+    void  matchRandomized(ImagePtr,unsigned int *,ImagePtr);
 
 protected slots:
     void changePower(int);
     void changeBegining(int);
     void changeEnd(int);
-    void createHist(void);
 
 private:
     //histogram matching controls for a polynomial of the form m * X^n + c
@@ -42,15 +41,15 @@ private:
 
     QSlider		*m_sliderBegining ;	// Slider to control the vaue of the histogram at 0
     QSpinBox	*m_spinBoxBegining;	// Spinbox to control the value of the histogram at 0
-    QCheckBox   *m_sliderEnd;       // Slider to control the value of the histogram at 255
-    QCheckBox   *m_spinBoxEnd;      // Spinbox to control the value of the histogram at 255
+
+    QSlider     *m_sliderEnd;       // Slider to control the value of the histogram at 255
+    QSpinBox    *m_spinBoxEnd;      // Spinbox to control the value of the histogram at 255
 
 	// label for Group Histogram Stretching group label
 	QLabel		*m_label;	// Label for printing Otsu thresholds
 
 	// widgets and groupbox
 	QGroupBox	*m_ctrlGrp;	// Groupbox for panel
-    int         *m_Hist; //Histogram
 
 
 };
