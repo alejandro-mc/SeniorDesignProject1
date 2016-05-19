@@ -318,10 +318,22 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
         for(in = start;in < endd;++in){
             /*look for the next spot to the left of lut to put the pixel*/
             i=lut[*in];
-            while(normHist[i] < 1) i--;
+            while(normHist[i] < 1 && i > -1) i--;//normHist holds the number of pixels available for each bucket
+                                                 //so normHist[i] < 1 means there is
+                                                 //no room left for a new pixel in that bucket
+
+
+            /*if all buckets to the left are full put the pixel in some bucket to the right*/
+            if(i == -1){//if there were no buckets available to the left then i == -1
+                i = lut[*in] + 1;
+
+                while(normHist[i] < 1 && i < MXGRAY) i++;
+            }
 
             /*set output pixel*/
-            *out = MAX(i,0);
+            //at this point we have 0 <= i <= 256
+            *out = MIN(i,MaxGray);//MaxGray is 255, this clips the values so if no suitable bucket is found
+                                  //it will finally be put in the 255 bucket
             normHist[*out] --;//decrement historgram bucket
             ++out;
         }
