@@ -293,10 +293,12 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
 
 
         /*scale target cummulative histogram*/
-        scale = total / (float) sumtarget;
-        for(int i=0; i<MXGRAY; ++i){
+        scale = total / (double) sumtarget;
+        cumhisttarget[0] = round(cumhisttarget[0] * scale);//normalize cummulative histogram
+        normHist[0] = cumhisttarget[0];
+        for(int i=1; i<MXGRAY; ++i){
             cumhisttarget[i] = round(cumhisttarget[i] * scale);//normalize cummulative histogram
-            normHist[i] = round(histtarget[i] * scale);//init normHist; will be needed to generate out pixels
+            normHist[i] = cumhisttarget[i] - cumhisttarget[i-1];//init normHist; will be needed to generate out pixels
         }
 
         /*initialize lookup table*/
