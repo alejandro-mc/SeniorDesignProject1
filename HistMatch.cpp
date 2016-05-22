@@ -162,7 +162,7 @@ HistMatch::controlPanel()
     m_sliderPower->setTickInterval(1);
     m_sliderPower->setMinimum(0);
     m_sliderPower->setMaximum(5);
-    m_sliderPower->setValue  (1);
+    m_sliderPower->setValue  (0);
 
     // create power spinbox
     m_spinBoxPower = new QSpinBox(m_ctrlGrp);

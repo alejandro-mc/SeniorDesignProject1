@@ -96,7 +96,7 @@ Median::controlPanel()
 
     // create label y
     QLabel *labelavgnbrs = new QLabel;
-    labelavgnbrs->setText(QString("AVG Neihbors:"));
+    labelavgnbrs->setText(QString("AVG Neighbors:"));
 
     // create AVG Neighbor Slider
     m_sliderAvg_Nbrs = new QSlider(Qt::Horizontal, m_ctrlGrp);
