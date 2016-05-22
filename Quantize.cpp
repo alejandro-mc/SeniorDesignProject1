@@ -2,9 +2,10 @@
 // IMPROC: Image Processing Software Package
 // Copyright (C) 2016 by George Wolberg
 //
-// Threshold.cpp - Threshold class
+// Quantize.cpp - Quantize class
 //
 // Written by: George Wolberg, 2016
+// Modified by : Alejandro Morejon Cortina, 2016
 // ======================================================================
 
 #include "MainWindow.h"
@@ -14,7 +15,7 @@
 extern MainWindow *g_mainWindowP;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::Threshold:
+// Quantize::Quantize:
 //
 // Constructor.
 //
@@ -24,7 +25,7 @@ Quantize::Quantize(QWidget *parent) : ImageFilter(parent)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::applyFilter:
+// Quantize::applyFilter:
 //
 // Run filter on the image, transforming I1 to I2.
 // Overrides ImageFilter::applyFilter().
@@ -51,7 +52,7 @@ Quantize::applyFilter(ImagePtr I1, ImagePtr I2)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::createGroupBox:
+// Quantize::createGroupBox:
 //
 // Create group box for control panel.
 //
@@ -70,15 +71,15 @@ Quantize::controlPanel()
     m_slider = new QSlider(Qt::Horizontal, m_ctrlGrp);
     m_slider->setTickPosition(QSlider::TicksBelow);
     m_slider->setTickInterval(25);
-    m_slider->setMinimum(1);
+    m_slider->setMinimum(2);
     m_slider->setMaximum(MXGRAY);
-    m_slider->setValue  (1);
+    m_slider->setValue  (2);
 
     // create spinbox
     m_spinBox = new QSpinBox(m_ctrlGrp);
-    m_spinBox->setMinimum(1);
+    m_spinBox->setMinimum(2);
     m_spinBox->setMaximum(MXGRAY);
-    m_spinBox->setValue  (1);
+    m_spinBox->setValue  (2);
 
     //create dither label
     QLabel *labelDither = new QLabel;
@@ -135,7 +136,7 @@ Quantize::changeLevels(int levels)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Quantize::changeLevels:
 //
-// Slot to process change in levels caused by moving the slider.
+// Slot to handle dither toggle.
 //
 void Quantize::toggleDither(int e)
 {
@@ -148,14 +149,11 @@ void Quantize::toggleDither(int e)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::threshold:
+// Quantize::quantize:
 //
-// Threshold I1 using the 2-level mapping shown below.  Output is in I2.
-// val<thr: 0;	 val >= thr: MaxGray (255)
-//! \brief	Threshold I1 using the 3-level mapping shown below.
-//! \details	Output is in I2. val<t1: g1; t1<=val<t2: g2; t2<=val: g3
+//! \brief	Quantize maps each pixel in I1 to anumber of gray levels.
 //! \param[in]	I1  - Input image.
-//! \param[in]	thr - Threshold.
+//! \param[in]	levels - Number of levels to which to map the input pixels.
 //! \param[out]	I2  - Output image.
 //
 void
@@ -167,10 +165,18 @@ Quantize::quantize(ImagePtr I1, int levels, ImagePtr I2) {
 
     // compute lut[]
     int i,j, lut[MXGRAY];
-    int scale = MXGRAY / levels;
+
+    //with rounding the number of leves the user expects to see
+    //is one more than what needs to be plugged in the formula
+    //that's the reason for using levels -1
+    double scale = MaxGray / (double) (levels -1);
     for (i=0; i< MXGRAY ; ++i)
     {
-        lut[i] = scale * (int) (i/ scale);
+        //lut[i] = scale * (int) (i/ scale);
+
+        //the new adjustment makes the result more balanced
+        //altough the first and last steps will be half the size of the others
+        lut[i] = ROUND(scale *  ROUND(i / scale));
     }
 
     int type, dithered, delta;
@@ -247,9 +253,11 @@ Quantize::quantize(ImagePtr I1, int levels, ImagePtr I2) {
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::reset:
+// Quantize::reset:
 //
 // Reset parameters.
 //
 void
-Quantize::reset() {}
+Quantize::reset() {
+
+}
