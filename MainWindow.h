@@ -72,6 +72,7 @@ protected:
 	void		mode		(int);
 
 
+
 private:
 	QMenu*			m_menuFile;
 	QMenu*			m_menuPtOps;

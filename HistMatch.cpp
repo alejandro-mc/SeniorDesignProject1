@@ -21,9 +21,67 @@ extern MainWindow *g_mainWindowP;
 //
 HistMatch::HistMatch(QWidget *parent) : ImageFilter(parent)
 {
+    m_isPixelBucketsInit = false;
+
 }
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//HistMatch::initPixelBuckets:
+void
+HistMatch::initPixelBuckets()
+{
+    ImagePtr I1 = g_mainWindowP->imageSrc();
+    int w = I1->width();
+    int h = I1->height();
+    unsigned long int total = w*h;
+
+    pixel * tmptop;//will be used to hold top pixel temporarily wile new pixel is put in a bucket
+
+
+    //initialize pixel buckets
+    for(int i=0;i<MXGRAY;++i)
+    {
+        m_pixelBucketsR[i].toppixel = NULL;
+        m_pixelBucketsG[i].toppixel = NULL;
+        m_pixelBucketsB[i].toppixel = NULL;
+    }
+
+    int type;
+    ChannelPtr<uchar> in, end;
+    pixelbucket * pixelBuckets;
+    for(int ch = 0; IP_getChannel(I1, ch, in, type); ch++) {
+        end = in + total;
+
+        if(ch < 2){
+
+            if(ch < 1){
+                pixelBuckets = m_pixelBucketsR;
+            }else{
+                pixelBuckets = m_pixelBucketsG;
+            }
+
+        }else{
+            pixelBuckets = m_pixelBucketsB;
+        }
+
+        unsigned long int pixindex =0;
+        while(in < end){//init source histogram
+
+            //let's add the pixel to one of our buckets
+            tmptop = pixelBuckets[*in].toppixel;
+            pixelBuckets[*in].toppixel = new pixel;
+            pixelBuckets[*in].toppixel->index = pixindex;
+            pixelBuckets[*in].toppixel->nextpixel = tmptop;
+            ++in;
+            ++pixindex;
+
+        }
+    }
+
+
+
+}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // HistMatch::applyFilter:
@@ -38,16 +96,32 @@ HistMatch::applyFilter(ImagePtr I1, ImagePtr I2)
 	// error checking
 	if(I1.isNull()) return 0;
 
+
+
 	// get threshold value
     int power = m_sliderPower->value();
-    int begining = m_sliderBegining->value();
-    int end = m_sliderEnd->value();
+    int begining,end;
+    if(m_checkBoxDecreasing->isChecked())
+    {
+        begining = 200;
+        if(power == 0){
+            end  = 200;
+        }else{
+            end  = 0;
+        }
+
+    }else{
+
+        begining = 0;
+        end      = 200;
+    }
+
     float m = (end - begining) / pow(255,power);
 
     // error checking, maybe?
 
 
-    /*cregate historgam*/
+    /*create target histogram from parameters*/
     unsigned int tmpHist[MXGRAY];
 
     //clear histogram
@@ -82,9 +156,6 @@ HistMatch::controlPanel()
     QLabel *labelBegining = new QLabel;
     labelBegining->setText(QString("Begining"));
 
-    QLabel *labelEnd = new QLabel;
-    labelEnd->setText("End");
-
     // create power slider
     m_sliderPower = new QSlider(Qt::Horizontal, m_ctrlGrp);
     m_sliderPower->setTickPosition(QSlider::TicksBelow);
@@ -99,33 +170,14 @@ HistMatch::controlPanel()
     m_spinBoxPower->setMaximum(5);
     m_spinBoxPower->setValue  (0);
 
-    // create Begining slider
-    m_sliderBegining = new QSlider(Qt::Horizontal, m_ctrlGrp);
-    m_sliderBegining->setTickPosition(QSlider::TicksBelow);
-    m_sliderBegining->setTickInterval(10);
-    m_sliderBegining->setMinimum(0);
-    m_sliderBegining->setMaximum(200);
-    m_sliderBegining->setValue  (200);
 
-    // create begining spinbox
-    m_spinBoxBegining = new QSpinBox(m_ctrlGrp);
-    m_spinBoxBegining->setMinimum(0);
-    m_spinBoxBegining->setMaximum(200);
-    m_spinBoxBegining->setValue  (200);
+    //create decreasing checkbox
+    QLabel *labelDecreasing = new QLabel;
+    labelDecreasing->setText(QString("Decreasing"));
 
-    // create End slider
-    m_sliderEnd = new QSlider(Qt::Horizontal, m_ctrlGrp);
-    m_sliderEnd->setTickPosition(QSlider::TicksBelow);
-    m_sliderEnd->setTickInterval(10);
-    m_sliderEnd->setMinimum(0);
-    m_sliderEnd->setMaximum(200);
-    m_sliderEnd->setValue  (200);
-
-    // create begining spinbox
-    m_spinBoxEnd = new QSpinBox(m_ctrlGrp);
-    m_spinBoxEnd->setMinimum(0);
-    m_spinBoxEnd->setMaximum(200);
-    m_spinBoxEnd->setValue  (200);
+    //create dither checkbox
+    m_checkBoxDecreasing = new QCheckBox(m_ctrlGrp);
+    m_checkBoxDecreasing->setChecked(false);
 
 
     // init signal/slot connections
@@ -133,30 +185,17 @@ HistMatch::controlPanel()
     connect(m_sliderPower , SIGNAL(valueChanged(int)), this, SLOT(changePower (int)));
     connect(m_spinBoxPower, SIGNAL(valueChanged(int)), this, SLOT(changePower (int)));
 
-    //Begining
-    connect(m_sliderBegining , SIGNAL(valueChanged(int)), this, SLOT(changeBegining (int)));
-    connect(m_spinBoxBegining, SIGNAL(valueChanged(int)), this, SLOT(changeBegining (int)));
-
-    //End Slider
-    connect(m_sliderEnd , SIGNAL(valueChanged(int)), this, SLOT(changeEnd (int)));
-    connect(m_spinBoxEnd, SIGNAL(valueChanged(int)), this, SLOT(changeEnd (int)));
-
+    //decreasing checkbox
+    connect(m_checkBoxDecreasing,SIGNAL(stateChanged(int)),this,SLOT(handleDecreasing(int)));
 
 
 	// assemble dialog
 	QGridLayout *layout = new QGridLayout;
-    layout->addWidget(  labelPower  , 0, 0);
-    layout->addWidget(m_sliderPower , 0, 1);
-    layout->addWidget(m_spinBoxPower, 0, 2);
-
-    layout->addWidget(  labelBegining  , 1, 0);
-    layout->addWidget(m_sliderBegining , 1, 1);
-    layout->addWidget(m_spinBoxBegining, 1, 2);
-
-    layout->addWidget(  labelEnd  , 2, 0);
-    layout->addWidget(m_sliderEnd , 2, 1);
-    layout->addWidget(m_spinBoxEnd, 2, 2);
-
+    layout->addWidget(  labelPower  ,       0,  0);
+    layout->addWidget(m_sliderPower ,       0,  1);
+    layout->addWidget(m_spinBoxPower,       0,  2);
+    layout->addWidget(labelDecreasing,      1,  0);
+    layout->addWidget(m_checkBoxDecreasing, 1,  1);
 
 
 	// assign layout to group box
@@ -175,6 +214,7 @@ HistMatch::controlPanel()
 void
 HistMatch::changePower(int power)
 {
+    m_internal = true;
 
     m_sliderPower ->blockSignals(true);
     m_sliderPower ->setValue    (power );
@@ -193,47 +233,15 @@ HistMatch::changePower(int power)
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// HistMatch::changeBegining:
+// HistMatch::handleDecreasing:
 //
-// Slot to process change in begining slider and checkbox.
-//
-void
-HistMatch::changeBegining(int begining)
-{
-
-    m_sliderBegining ->blockSignals(true);
-    m_sliderBegining ->setValue    (begining );
-    m_sliderBegining ->blockSignals(false);
-
-    m_spinBoxBegining->blockSignals(true);
-    m_spinBoxBegining->setValue    (begining );
-    m_spinBoxBegining->blockSignals(false);
-
-    // apply filter to source image; save result in destination image
-    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
-
-
-    // display output
-    g_mainWindowP->displayOut();
-}
-
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// HistMatch::changeEnd:
-//
-// Slot to process change in End slider and checkbox.
+// Slot to process handle checking and unchecking of decreasing checkbox
 //
 void
-HistMatch::changeEnd(int end)
+HistMatch::handleDecreasing(int checked)
 {
+    m_internal = true;
 
-    m_sliderEnd ->blockSignals(true);
-    m_sliderEnd ->setValue    (end );
-    m_sliderEnd ->blockSignals(false);
-
-    m_spinBoxEnd->blockSignals(true);
-    m_spinBoxEnd->setValue    (end );
-    m_spinBoxEnd->blockSignals(false);
 
     // apply filter to source image; save result in destination image
     applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
@@ -256,11 +264,29 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
     int h = I1->height();
     int total = w * h;
     float scale;
-    unsigned int sumsrc,sumtarget,histsrc[MXGRAY],normHist[MXGRAY];;
-    unsigned long cumhistsrc[MXGRAY],cumhisttarget[MXGRAY];
-    unsigned char lut[MXGRAY];
+    unsigned int sumtarget,normHist[MXGRAY];
+    unsigned long cumhisttarget[MXGRAY];
+
+
+    if(! m_isPixelBucketsInit)
+    {
+        initPixelBuckets();
+        m_isPixelBucketsInit = true;
+    }
+
+    if(!m_internal)
+    {
+          clearPixelBuckets();
+          initPixelBuckets();
+    }
+
+    m_internal= false;
+
+
+
 
     int type;
+    pixelbucket * pixelBuckets;
     ChannelPtr<uchar> in,out,start, endd;
     for(int ch = 0; IP_getChannel(I1, ch, in, type); ch++) {
         IP_getChannel(I2, ch, out, type);
@@ -268,26 +294,26 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
         start = in;
         endd = in + total;
 
-        /*Build Histogram for source image*/
-        for(int i = 0; i<MXGRAY;++i){ //clear historgrams
-            histsrc[i] = 0;
-            cumhistsrc[i] = cumhisttarget[i] = 0;
+        if(ch < 2){
+
+            if(ch < 1){
+                pixelBuckets = m_pixelBucketsR;
+            }else{
+                pixelBuckets = m_pixelBucketsG;
+            }
+
+        }else{
+            pixelBuckets = m_pixelBucketsB;
         }
 
-        while(in < endd){
-            histsrc[*in] ++;
-            ++in;
-        }             //init source histogram
-
-
-        /*Create cummulative histogram for source and target*/
-        sumsrc = 0;
+        /*Create cummulative histogram for target*/
+        //sumsrc = 0;
         sumtarget =0;
         for(int i = 0; i < MXGRAY; ++i){
-            sumsrc += histsrc[i];
+            //sumsrc += histsrc[i];
             sumtarget += histtarget[i];
 
-            cumhistsrc[i] = sumsrc;
+            //cumhistsrc[i] = sumsrc;
             cumhisttarget[i] = sumtarget;
         }
 
@@ -301,43 +327,34 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
             normHist[i] = cumhisttarget[i] - cumhisttarget[i-1];//init normHist; will be needed to generate out pixels
         }
 
-        /*initialize lookup table*/
-        for(int i=0,j = 1; i<MXGRAY; ++i){// i itereates throug the src and j through the target
-
-            /*find and set target value for i*/
-            while(cumhisttarget[j] < cumhistsrc[i]) ++j;//find interval to which cumhistsrc[i] belongs
-            if(abs(cumhisttarget[j] - cumhistsrc[i]) > abs(cumhistsrc[i] - cumhisttarget[j-1])){
-                lut[i] = j-1;
-            }else{
-                lut[i] = j;
-            }
-
-
-        }
 
         /*generate output image*/
-        int i;
-        for(in = start;in < endd;++in){
-            /*look for the next spot to the left of lut to put the pixel*/
-            i=lut[*in];
-            while(normHist[i] < 1 && i > -1) i--;//normHist holds the number of pixels available for each bucket
-                                                 //so normHist[i] < 1 means there is
-                                                 //no room left for a new pixel in that bucket
+        int j=0;//j is the current normHist bucket
+        pixel * currentpixel;
+        //for each bucket in the pixel bucket
+        for(int i=0;i<MXGRAY;++i)
+        {
+            //for each pixel in the bucket assign a value
+            //according to the current normHist bucket
+            if(pixelBuckets[i].toppixel != NULL)
+            {
+                currentpixel = pixelBuckets[i].toppixel;
+                while(currentpixel->nextpixel != NULL)
+                {
+                    //look for next non empty bucket in normHist
+                    while(normHist[j] < 1 && j < MXGRAY) j++;
 
+                    out[currentpixel->index] = j;
+                    normHist[j]--;
+                    currentpixel = currentpixel->nextpixel;
+                }
 
-            /*if all buckets to the left are full put the pixel in some bucket to the right*/
-            if(i == -1){//if there were no buckets available to the left then i == -1
-                i = lut[*in] + 1;
-
-                while(normHist[i] < 1 && i < MXGRAY) i++;
+                //set the value of the last pixel in the bucket
+                while(normHist[j] < 1 & j < MXGRAY) j++;
+                out[currentpixel->index] = j;
+                normHist[j]--;
             }
 
-            /*set output pixel*/
-            //at this point we have 0 <= i <= 256
-            *out = MIN(i,MaxGray);//MaxGray is 255, this clips the values so if no suitable bucket is found
-                                  //it will finally be put in the 255 bucket
-            normHist[*out] --;//decrement historgram bucket
-            ++out;
         }
 
 
@@ -347,10 +364,61 @@ HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
 }
 
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//HistMatch::clearPixelBuckets:
+//
+void
+HistMatch::clearPixelBuckets()
+{
+    pixel * nextpixeltobecleared;
+    pixel * pixeltobecleared;
+
+    pixelbucket * pixelBuckets;
+    //for every channel
+    for(int ch=0;ch<3;ch++)
+    {
+        if(ch < 2){
+
+            if(ch < 1){
+                pixelBuckets = m_pixelBucketsR;
+            }else{
+                pixelBuckets = m_pixelBucketsG;
+            }
+
+        }else{
+            pixelBuckets = m_pixelBucketsB;
+        }
+
+        //for each bucket
+        for(int i=0;i<MXGRAY;i++)
+        {
+            //delete each pixel
+            if(pixelBuckets[i].toppixel !=NULL)
+            {
+                pixeltobecleared = pixelBuckets[i].toppixel;
+                nextpixeltobecleared = pixeltobecleared->nextpixel;
+                while(nextpixeltobecleared !=NULL)
+                {
+                    delete pixeltobecleared;
+                    pixeltobecleared = nextpixeltobecleared;
+                    nextpixeltobecleared = pixeltobecleared->nextpixel;
+                }
+                delete pixeltobecleared;
+            }
+        }
+
+
+
+    }
+
+}
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // HistMatch::~HistMatch:
 HistMatch::~HistMatch()
 {
+    clearPixelBuckets();
 }
 
 

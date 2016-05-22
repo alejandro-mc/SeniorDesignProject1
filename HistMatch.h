@@ -30,26 +30,49 @@ protected:
 
 protected slots:
     void changePower(int);
-    void changeBegining(int);
-    void changeEnd(int);
+    void handleDecreasing(int);
 
 private:
-    //histogram matching controls for a polynomial of the form m * X^n + c
-    //the controls are the power, the value at 0 and the value at 255
+    //controls for a target histogram of the form m * X^n + c
+    //the controls are the power, and decreasing which determines whether the histogram
+    //shape is increasing or decreasing
     QSlider		*m_sliderPower ;	// Slider to change power of the polynomial
     QSpinBox	*m_spinBoxPower;	// Spinbox to change the power of the polynomial
 
-    QSlider		*m_sliderBegining ;	// Slider to control the vaue of the histogram at 0
-    QSpinBox	*m_spinBoxBegining;	// Spinbox to control the value of the histogram at 0
+    QCheckBox   *m_checkBoxDecreasing;//determines whether the histogram is increasing or decreasing
 
-    QSlider     *m_sliderEnd;       // Slider to control the value of the histogram at 255
-    QSpinBox    *m_spinBoxEnd;      // Spinbox to control the value of the histogram at 255
-
-	// label for Group Histogram Stretching group label
-	QLabel		*m_label;	// Label for printing Otsu thresholds
+    // label for Group Histogram Matching group label
+    QLabel		*m_label;
 
 	// widgets and groupbox
 	QGroupBox	*m_ctrlGrp;	// Groupbox for panel
+
+    //I'm going to bucket sort the input pixels
+    //the pixels will be put in 256 buckets
+    struct pixel{
+        unsigned long int index;
+        pixel * nextpixel;
+    };
+
+    struct pixelbucket{
+        pixel * toppixel;
+    };
+
+    pixelbucket  m_pixelBucketsR[MXGRAY];//array to hold the sorted input pixels for the red channel
+
+    pixelbucket  m_pixelBucketsG[MXGRAY];//array to hold the sorted input pixels for the green channel
+
+    pixelbucket  m_pixelBucketsB[MXGRAY];//array to hold the sorted input pixels for the blue channel
+
+
+    bool         m_isPixelBucketsInit;//deterines whether the pixelBuckets were initialized
+
+    void         initPixelBuckets();//initializes pixel buckets
+
+    void         clearPixelBuckets();
+
+    bool         m_internal;//This is to know when the event invoking applyfilter
+                            //did not originate from the HistMatch widget
 
 
 };

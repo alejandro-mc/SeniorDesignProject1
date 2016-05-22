@@ -392,8 +392,6 @@ MainWindow::createModeButtons()
 	return groupBox;
 }
 
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // MainWindow::createExitButtons:
 //
@@ -487,12 +485,20 @@ MainWindow::open() {
 	// init vars
 	m_width  = m_imageSrc->width ();
 	m_height = m_imageSrc->height();
-	preview();
+    preview();
 
 	// enable the following now that input image is read
 	m_menuPtOps	->setEnabled(true);
     m_menuNeighborOps->setEnabled(true);
 	m_groupBoxPanels->setEnabled(true);
+
+    // get code from action
+    //m_code = action->data().toInt();
+
+    if(m_code > 0)
+        m_imageFilterType[m_code]->applyFilter(m_imageSrc, m_imageDst);
+
+    preview();
 }
 
 
@@ -694,8 +700,8 @@ void MainWindow::mode(int flag)
 	else	m_histoColor = 0;	// RGB
 
 	// re-apply filter for changed mode
-	if(m_code > 0)
-		m_imageFilterType[m_code]->applyFilter(m_imageSrc, m_imageDst);
+    if(m_code > 0)
+        m_imageFilterType[m_code]->applyFilter(m_imageSrc, m_imageDst);
 
 	// display image
 	preview();
@@ -731,7 +737,7 @@ MainWindow::execute(QAction* action)
 	// skip over menu ops that don't require image processing
 	QString name = action->text();
 	if(name == QString("&Open") || name == QString("&Quit")) {
-		m_code = -1;
+        //m_code = -1;
 		return;
 	}
 
