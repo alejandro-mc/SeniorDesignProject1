@@ -167,4 +167,21 @@ Threshold::threshold(ImagePtr I1, int thr, ImagePtr I2) {
 // Reset parameters.
 //
 void
-Threshold::reset() {}
+Threshold::reset() {
+
+    m_slider ->blockSignals(true);
+    m_spinBox->blockSignals(true);
+
+    m_slider ->setValue    (MXGRAY >> 1);
+    m_spinBox->setValue    (MXGRAY >> 1);
+
+    m_slider ->blockSignals(false);
+    m_spinBox->blockSignals(false);
+
+    // apply filter to source image; save result in destination image
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+
+    // display output
+    g_mainWindowP->displayOut();
+}

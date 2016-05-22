@@ -2,9 +2,10 @@
 // IMPROC: Image Processing Software Package
 // Copyright (C) 2016 by George Wolberg
 //
-// Threshold.cpp - Threshold class
+// HistStretch.cpp - HistStretch class
 //
-// Written by: George Wolberg, 2016
+// Written by:  George Wolberg, 2016
+// Modified by: Alejandro Morejon Cortina, 2016
 // ======================================================================
 
 #include "MainWindow.h"
@@ -181,7 +182,7 @@ HistStretch::changeMin(int min)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Threshold::changeThr:
+// HistMatch::changeMax:
 //
 // Slot to process change in thr caused by moving the slider.
 //
@@ -386,4 +387,36 @@ HistStretch::~HistStretch()
 // Reset parameters.
 //
 void
-HistStretch::reset() {}
+HistStretch::reset() {
+
+    m_checkBoxMin->blockSignals(true);
+    m_sliderMin ->blockSignals(true);
+    m_spinBoxMin->blockSignals(true);
+    m_checkBoxMax->blockSignals(true);
+    m_sliderMax ->blockSignals(true);
+    m_spinBoxMax->blockSignals(true);
+
+
+    m_checkBoxMin->setChecked(false);
+    m_sliderMin ->setValue    (0 );
+    m_spinBoxMin->setValue    (0 );
+
+    m_checkBoxMax->setChecked(false);
+    m_spinBoxMax->setValue    (MaxGray );
+    m_sliderMax ->setValue    (MaxGray );
+
+    m_spinBoxMin->blockSignals(false);
+    m_checkBoxMin->blockSignals(false);
+    m_sliderMin ->blockSignals(false);
+    m_checkBoxMax->blockSignals(false);
+    m_sliderMax ->blockSignals(false);
+    m_spinBoxMax->blockSignals(false);
+
+
+    // apply filter to source image; save result in destination image
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+
+    // display output
+    g_mainWindowP->displayOut();
+}

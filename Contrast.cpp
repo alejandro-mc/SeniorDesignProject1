@@ -5,6 +5,7 @@
 // Contrast.cpp - Brightness/Contrast widget.
 //
 // Written by: George Wolberg, 2016
+// Modified by: Alejandro Morejon Cortina, 2016
 // ======================================================================
 
 #include "MainWindow.h"
@@ -76,7 +77,7 @@ Contrast::controlPanel()
     QLabel *labelB = new QLabel;
     labelB->setText(QString("Brightness"));
 
-    // create slider
+    // create brightness slider
     m_sliderB = new QSlider(Qt::Horizontal, m_ctrlGrp);
     m_sliderB->setTickPosition(QSlider::TicksBelow);
     m_sliderB->setTickInterval(10);
@@ -84,7 +85,7 @@ Contrast::controlPanel()
     m_sliderB->setMaximum(100);
     m_sliderB->setValue  (0);
 
-    // create spinbox
+    // create brightness spinbox
     m_spinBoxB = new QSpinBox(m_ctrlGrp);
     m_spinBoxB->setMinimum(-100);
     m_spinBoxB->setMaximum(100);
@@ -100,7 +101,7 @@ Contrast::controlPanel()
     QLabel *labelC = new QLabel;
     labelC->setText(QString("Contrast"));
 
-    // create slider
+    // create contrast slider
     m_sliderC = new QSlider(Qt::Horizontal, m_ctrlGrp);
     m_sliderC->setTickPosition(QSlider::TicksBelow);
     m_sliderC->setTickInterval(10);
@@ -108,7 +109,7 @@ Contrast::controlPanel()
     m_sliderC->setMaximum(100);
     m_sliderC->setValue  (0);
 
-    // create spinbox
+    // create contrast spinbox
     m_spinBoxC = new QDoubleSpinBox(m_ctrlGrp);
     m_spinBoxC->setMinimum(0);
     m_spinBoxC->setMaximum(4.0);
@@ -169,10 +170,15 @@ Contrast::controlPanel()
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// contrast:
+// Contrast::contrst
 //
-// INSERT YOUR CODE HERE.
 //
+//! \brief	Applies a contrast filter on I1.
+//! \details	Levels over reference
+//! \param[in]      I1         - Input image.
+//! \param[double]	brightness - Specifies the brightness or vertical shift.
+//! \param[double]	contrast   - Specifies the contrast or factor by which to scale the pixels.
+//! \param[out]     I2         - Output image.
 void
 Contrast::contrast(ImagePtr I1, double brightness, double contrast, ImagePtr I2)
 {
@@ -278,4 +284,33 @@ Contrast::changeReference(int refval)
 // Reset parameters.
 //
 void
-Contrast::reset() {}
+Contrast::reset() {
+
+    m_sliderR ->blockSignals(true);
+    m_sliderC ->blockSignals(true);
+    m_sliderB ->blockSignals(true);
+    m_spinBoxB->blockSignals(true);
+    m_spinBoxC->blockSignals(true);
+    m_spinBoxR->blockSignals(true);
+
+    m_sliderR ->setValue(MXGRAY >> 1);
+    m_sliderC ->setValue(0);
+    m_sliderB ->setValue(0);
+    m_spinBoxB->setValue(0);
+    m_spinBoxC->setValue(2.0);
+    m_spinBoxR->setValue(MXGRAY >> 1);
+
+    m_sliderR ->blockSignals(false);
+    m_sliderC ->blockSignals(false);
+    m_sliderB ->blockSignals(false);
+    m_spinBoxB->blockSignals(false);
+    m_spinBoxC->blockSignals(false);
+    m_spinBoxR->blockSignals(false);
+
+
+
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
+}

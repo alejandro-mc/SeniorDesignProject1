@@ -1,13 +1,13 @@
-#ifndef BLUR_SHARPEN_H
-#define BLUR_SHARPEN_H
+#ifndef BLUR_H
+#define BLUR_H
 
 #include "ImageFilter.h"
 
-class Blur_Sharpen : public ImageFilter {
+class Blur : public ImageFilter {
     Q_OBJECT
 
 public:
-    Blur_Sharpen	(QWidget *parent = 0);          // constructor
+    Blur    	(QWidget *parent = 0);          // constructor
     QGroupBox*	controlPanel	();                 // create control panel
     bool		applyFilter(ImagePtr, ImagePtr);    // apply filter to input to init output
     void		reset		();                     // reset parameters
@@ -27,10 +27,10 @@ protected slots:
 
 private:
     //blur controls
-    QSlider		*m_sliderFilterX ;  // Filter width slider
-    QSpinBox	*m_spinBoxFilterX;  // Filter width spinbox
-    QSlider     *m_sliderFilterY;   //Filter height slider
-    QSpinBox    *m_spinBoxFilterY;  //Filter height spinbox
+    QSlider		*m_sliderFilterWidth ;  // Filter width slider
+    QSpinBox	*m_spinBoxFilterWidth;  // Filter width spinbox
+    QSlider     *m_sliderFilterHeight;   //Filter height slider
+    QSpinBox    *m_spinBoxFilterHeight;  //Filter height spinbox
 
     QCheckBox   *m_checkBoxSqr;     // Check box to lock to keep FilterX = FilterY
 
@@ -48,4 +48,4 @@ private:
     int         *m_blurbuffer;//blur buffer
 };
 
-#endif // BLUR_SHARPEN_H
+#endif // BLUR_H

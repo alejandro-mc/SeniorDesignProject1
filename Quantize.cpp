@@ -260,4 +260,20 @@ Quantize::quantize(ImagePtr I1, int levels, ImagePtr I2) {
 void
 Quantize::reset() {
 
+    m_slider  ->blockSignals(true);
+    m_spinBox ->blockSignals(true);
+    m_checkBox->blockSignals(true);
+
+    m_slider  ->setValue(2);
+    m_spinBox ->setValue(2);
+    m_checkBox->setChecked(false);
+
+    m_slider  ->blockSignals(false);
+    m_spinBox ->blockSignals(false);
+    m_checkBox->blockSignals(false);
+
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
 }

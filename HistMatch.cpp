@@ -254,7 +254,7 @@ HistMatch::handleDecreasing(int checked)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // HistMatch::match:
 //
-// HistMatch I1 using the 2-level mapping shown below.  Output is in I2.
+//
 //
 void
 HistMatch::match(ImagePtr I1,unsigned int *histtarget,ImagePtr I2)
@@ -428,4 +428,27 @@ HistMatch::~HistMatch()
 // Reset parameters.
 //
 void
-HistMatch::reset() {}
+HistMatch::reset() {
+
+    m_internal = true;
+
+    m_sliderPower        ->  blockSignals(true);
+    m_spinBoxPower       ->  blockSignals(true);
+    m_checkBoxDecreasing ->  blockSignals(true);
+
+    m_sliderPower        ->  setValue    (0 );
+    m_spinBoxPower       ->  setValue    (0 );
+    m_checkBoxDecreasing ->  setChecked(false);
+
+    m_sliderPower        ->  blockSignals(false);
+    m_spinBoxPower       ->  blockSignals(false);
+    m_checkBoxDecreasing ->  blockSignals(false);
+
+
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+
+    // display output
+    g_mainWindowP->displayOut();
+
+}

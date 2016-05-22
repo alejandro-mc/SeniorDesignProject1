@@ -4,7 +4,7 @@
 //
 // Median.cpp - Median class
 //
-// Written by: George Wolberg, 2016
+// Written  by: George Wolberg, 2016
 // Modified by: Alejandro Morejon Cortina, 2016
 // ======================================================================
 
@@ -278,11 +278,12 @@ Median::changeIter(int iter)
 //
 // Performs a median filter opertion
 //
-//! \brief
-//! \details	Output is in I2. val<t1: g1; t1<=val<t2: g2; t2<=val: g3
-//! \param[in]	in  - Input image.
-//! \param[in]	sz -  Kernel Dimension.
-//! \param[out]	out  - Output image.
+//! \brief Performs a median filter on the entire image
+//! \details Maps every neighborhood of I1 to the corresponding pixel in I2
+//! \param[in]	in       -  Input image.
+//! \param[in]	sz       -  Kernel Dimension.
+//! \param[in]  avg_nbrs -  The number of pixels above and below the median in the sorted neighborhood
+//! \param[out]	out      -  Output image.
 //
 void Median::median(ImagePtr in, int sz,int avg_nbrs, ImagePtr out){
 
@@ -399,6 +400,7 @@ void Median::processRows(int width,int sz,int avg_nbrs,
         ++p3;
 
         //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
+        //int bufferwidth = padsize +
         for (int i=padsize+1;i < padsize+width; ++i){
             add = i + padsize;
             sub = i - padsize -1;
@@ -454,7 +456,8 @@ void Median::processRows(int width,int sz,int avg_nbrs,
         ++p3;
 
         //SLIDE NEIGHBORHOOD AND COMPUTE THE VALUES FOR THE REST OF THE PIXELS IN THE ROW
-        for (int i=padsize+1;i < padsize+width; ++i){
+        int lastcolumn = padsize + width;
+        for (int i=padsize+1;i < lastcolumn; ++i){
             add = i + padsize;
             sub = i - padsize -1;
             //update histogram for new neighborhood
@@ -495,10 +498,11 @@ Median::getAvg(int neighborhood_size, int avgnbrs,int * avg){
 
     //first find the median/////////////////////////
     median=-1;
+    int tmp = neighborhood_size +1;
     do{
         ++median;
         items += m_histogram[median];
-    }while((items << 1) < (neighborhood_size +1));
+    }while((items << 1) < tmp);
     //end median
 
     //sum neighbors above and below median in the the bucket containing the median
@@ -532,22 +536,6 @@ Median::getAvg(int neighborhood_size, int avgnbrs,int * avg){
     *avg = sum / ((avgnbrs << 1) + 1);
 }
 
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//Median::genSortedNbrs:
-//
-void Median::genSortedNbrs(uchar * lst)
-{
-    for(int i=0;i<MXGRAY;++i)//create list of sorted neighbors
-    {
-        for(int j=0;j< m_histogram[i];++j)
-        {
-            *lst = i;
-            ++lst;
-
-        }
-    }
-}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Median::copypadded:
@@ -592,7 +580,35 @@ Median::copypadded(unsigned char * dest, ChannelPtr<uchar> src, int padsize, int
 // Reset parameters.
 //
 void
-Median::reset() {}
+Median::reset() {
+
+    m_sliderIter          ->  blockSignals(true);
+    m_spinBoxIter         ->  blockSignals(true);
+    m_sliderKernelDim     ->  blockSignals(true);
+    m_spinBoxKernelDim    ->  blockSignals(true);
+    m_sliderAvg_Nbrs      ->  blockSignals(true);
+    m_spinBoxAvg_Nbrs     ->  blockSignals(true);
+
+    m_sliderIter          ->  setValue    (1 );
+    m_spinBoxIter         ->  setValue    (1 );
+    m_sliderKernelDim     ->  setValue    (1 );
+    m_spinBoxKernelDim    ->  setValue    (1 );
+    m_sliderAvg_Nbrs      ->  setValue    (0 );
+    m_spinBoxAvg_Nbrs     ->  setValue    (0 );
+
+    m_sliderIter          ->  blockSignals(false);
+    m_spinBoxIter         ->  blockSignals(false);
+    m_sliderKernelDim     ->  blockSignals(false);
+    m_spinBoxKernelDim    ->  blockSignals(false);
+    m_sliderAvg_Nbrs      ->  blockSignals(false);
+    m_spinBoxAvg_Nbrs     ->  blockSignals(false);
+
+    // apply filter to source image; save result in destination image
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Median::~Median()

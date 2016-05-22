@@ -41,7 +41,6 @@ private:
                                   //it's a circular buffer each entry is dynamically allocated array
                                   //of (img_width + KernelDim - 1) uchars
     unsigned int * m_histogram;   //histogram to sort neighborhood pixels
-    void          genSortedNbrs(uchar*);//generates a list of sorted elements based on m_histogram
 
     //once the circular buffer is initialized call this function to process the rows
     //top-down or bottom-up

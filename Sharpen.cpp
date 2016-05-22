@@ -165,7 +165,7 @@ Sharpen::changeKernelSize(int sz)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Sharpen::changeFilterY:
+// Sharpen::changeFilterWidth:
 //
 // Slot to process change in filter height.
 //
@@ -454,4 +454,26 @@ void Sharpen::sharpen(ImagePtr in, int sz,double fctr, ImagePtr out){
 // Reset parameters.
 //
 void
-Sharpen::reset() {}
+Sharpen::reset() {
+
+    m_sliderKernelSize     ->  blockSignals(true);
+    m_spinBoxKernelSize    ->  blockSignals(true);
+    m_sliderFactor         ->  blockSignals(true);
+    m_spinBoxFactor        ->  blockSignals(true);
+
+    m_sliderKernelSize     ->  setValue    (1 );
+    m_spinBoxKernelSize    ->  setValue    (1 );
+    m_sliderFactor         ->  setValue    (1 );
+    m_spinBoxFactor        ->  setValue    (1 );
+
+    m_sliderKernelSize     ->  blockSignals(false);
+    m_spinBoxKernelSize    ->  blockSignals(false);
+    m_sliderFactor         ->  blockSignals(false);
+    m_spinBoxFactor        ->  blockSignals(false);
+
+    // apply filter to source image; save result in destination image
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
+}

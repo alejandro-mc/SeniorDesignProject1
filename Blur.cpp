@@ -2,48 +2,47 @@
 // IMPROC: Image Processing Software Package
 // Copyright (C) 2016 by George Wolberg
 //
-// Threshold.cpp - Threshold class
+// Blur.cpp - Blur class
 //
 // Written by: George Wolberg, 2016
 // Modified by: Alejandro Morejon Cortina, 2016
 // ======================================================================
 
 #include "MainWindow.h"
-#include "Blur_Sharpen.h"
+#include "Blur.h"
 
 
 extern MainWindow *g_mainWindowP;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::Blur_Sharpen:
+// Blur::Blur:
 //
 // Constructor.
 //
-Blur_Sharpen::Blur_Sharpen(QWidget *parent) : ImageFilter(parent)
+Blur::Blur(QWidget *parent) : ImageFilter(parent)
 {
     m_maxFilterDim = 99;
     m_minFilterDim = 1;
-    //m_blurbuffer = new int[2];//initialize to junk
 }
 
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::applyFilter:
+// Blur::applyFilter:
 //
 // Run filter on the image, transforming I1 to I2.
 // Overrides ImageFilter::applyFilter().
 // Return 1 for success, 0 for failure.
 //
 bool
-Blur_Sharpen::applyFilter(ImagePtr I1, ImagePtr I2)
+Blur::applyFilter(ImagePtr I1, ImagePtr I2)
 {
     // error checking
     if(I1.isNull()) return 0;
 
     // get threshold value
-    int xsz = m_sliderFilterX->value();
-    int ysz = m_sliderFilterY->value();
+    int xsz = m_sliderFilterWidth->value();
+    int ysz = m_sliderFilterHeight->value();
 
     // error checking
     if(xsz < m_minFilterDim || xsz > m_maxFilterDim || ysz < m_minFilterDim
@@ -58,56 +57,56 @@ Blur_Sharpen::applyFilter(ImagePtr I1, ImagePtr I2)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::createGroupBox:
+// Blur::createGroupBox:
 //
 // Create group box for control panel.
 //
 QGroupBox*
-Blur_Sharpen::controlPanel()
+Blur::controlPanel()
 {
     // init group box
     m_ctrlGrp = new QGroupBox("Blur");
 
     // init widgets
     // create label x
-    QLabel *xlabel = new QLabel;
-    xlabel->setText(QString("X:"));
+    QLabel *labelFilterWidth = new QLabel;
+    labelFilterWidth->setText(QString("Filter Width:"));
 
     // create x slider
-    m_sliderFilterX = new QSlider(Qt::Horizontal, m_ctrlGrp);
-    m_sliderFilterX ->setTickPosition(QSlider::TicksBelow);
-    m_sliderFilterX ->setTickInterval(2);
-    m_sliderFilterX ->setSingleStep(2);
-    m_sliderFilterX ->setMinimum(m_minFilterDim);
-    m_sliderFilterX ->setMaximum(m_maxFilterDim);
-    m_sliderFilterX ->setValue  (m_minFilterDim);
+    m_sliderFilterWidth = new QSlider(Qt::Horizontal, m_ctrlGrp);
+    m_sliderFilterWidth ->setTickPosition(QSlider::TicksBelow);
+    m_sliderFilterWidth ->setTickInterval(2);
+    m_sliderFilterWidth ->setSingleStep(2);
+    m_sliderFilterWidth ->setMinimum(m_minFilterDim);
+    m_sliderFilterWidth ->setMaximum(m_maxFilterDim);
+    m_sliderFilterWidth ->setValue  (m_minFilterDim);
 
     // create x spinbox
-    m_spinBoxFilterX = new QSpinBox(m_ctrlGrp);
-    m_spinBoxFilterX ->setMinimum(m_minFilterDim);
-    m_spinBoxFilterX ->setSingleStep(2);
-    m_spinBoxFilterX ->setMaximum(m_maxFilterDim);
-    m_spinBoxFilterX ->setValue  (m_minFilterDim);
+    m_spinBoxFilterWidth = new QSpinBox(m_ctrlGrp);
+    m_spinBoxFilterWidth ->setMinimum(m_minFilterDim);
+    m_spinBoxFilterWidth ->setSingleStep(2);
+    m_spinBoxFilterWidth ->setMaximum(m_maxFilterDim);
+    m_spinBoxFilterWidth ->setValue  (m_minFilterDim);
 
     // create label y
-    QLabel *ylabel = new QLabel;
-    ylabel->setText(QString("Y:"));
+    QLabel *labelFilterHeight = new QLabel;
+    labelFilterHeight->setText(QString("Filter Height:"));
 
     // create y slider
-    m_sliderFilterY = new QSlider(Qt::Horizontal, m_ctrlGrp);
-    m_sliderFilterY ->setTickPosition(QSlider::TicksBelow);
-    m_sliderFilterY ->setTickInterval(2);
-    m_sliderFilterY ->setSingleStep(2);
-    m_sliderFilterY ->setMinimum(m_minFilterDim);
-    m_sliderFilterY ->setMaximum(m_maxFilterDim);
-    m_sliderFilterY ->setValue  (m_minFilterDim);
+    m_sliderFilterHeight = new QSlider(Qt::Horizontal, m_ctrlGrp);
+    m_sliderFilterHeight ->setTickPosition(QSlider::TicksBelow);
+    m_sliderFilterHeight ->setTickInterval(2);
+    m_sliderFilterHeight ->setSingleStep(2);
+    m_sliderFilterHeight ->setMinimum(m_minFilterDim);
+    m_sliderFilterHeight ->setMaximum(m_maxFilterDim);
+    m_sliderFilterHeight ->setValue  (m_minFilterDim);
 
     // create y spinbox
-    m_spinBoxFilterY = new QSpinBox(m_ctrlGrp);
-    m_spinBoxFilterY ->setMinimum(m_minFilterDim);
-    m_spinBoxFilterY ->setSingleStep(2);
-    m_spinBoxFilterY ->setMaximum(m_maxFilterDim);
-    m_spinBoxFilterY ->setValue  (m_minFilterDim);
+    m_spinBoxFilterHeight = new QSpinBox(m_ctrlGrp);
+    m_spinBoxFilterHeight ->setMinimum(m_minFilterDim);
+    m_spinBoxFilterHeight ->setSingleStep(2);
+    m_spinBoxFilterHeight ->setMaximum(m_maxFilterDim);
+    m_spinBoxFilterHeight ->setValue  (m_minFilterDim);
 
 
 
@@ -120,26 +119,26 @@ Blur_Sharpen::controlPanel()
     m_checkBoxSqr->setChecked(true);
 
     // init signal/slot connections for filter size controls
-    connect(m_sliderFilterX , SIGNAL(valueChanged(int)), this, SLOT(changeFilterX (int)));
-    connect(m_spinBoxFilterX, SIGNAL(valueChanged(int)), this, SLOT(changeFilterX (int)));
+    connect(m_sliderFilterWidth , SIGNAL(valueChanged(int)), this, SLOT(changeFilterX (int)));
+    connect(m_spinBoxFilterWidth, SIGNAL(valueChanged(int)), this, SLOT(changeFilterX (int)));
 
-    connect(m_sliderFilterY , SIGNAL(valueChanged(int)), this, SLOT(changeFilterY (int)));
-    connect(m_spinBoxFilterY , SIGNAL(valueChanged(int)), this, SLOT(changeFilterY (int)));
+    connect(m_sliderFilterHeight , SIGNAL(valueChanged(int)), this, SLOT(changeFilterY (int)));
+    connect(m_spinBoxFilterHeight , SIGNAL(valueChanged(int)), this, SLOT(changeFilterY (int)));
 
     connect(m_checkBoxSqr, SIGNAL(stateChanged(int)), this, SLOT(toggleSquare (int)));
 
     // assemble dialog
     QGridLayout *layout = new QGridLayout;
-    layout->addWidget(  xlabel          , 0, 0);
-    layout->addWidget(m_sliderFilterX   , 0, 1);
-    layout->addWidget(m_spinBoxFilterX  , 0, 2);
+    layout->addWidget(  labelFilterWidth     , 0, 0);
+    layout->addWidget(m_sliderFilterWidth    , 0, 1);
+    layout->addWidget(m_spinBoxFilterWidth   , 0, 2);
 
-    layout->addWidget(  ylabel          , 1, 0);
-    layout->addWidget(m_sliderFilterY   , 1, 1);
-    layout->addWidget(m_spinBoxFilterY  , 1, 2);
+    layout->addWidget(  labelFilterHeight    , 1, 0);
+    layout->addWidget(m_sliderFilterHeight   , 1, 1);
+    layout->addWidget(m_spinBoxFilterHeight  , 1, 2);
 
-    layout->addWidget(labelSquare       ,2,0);
-    layout->addWidget(m_checkBoxSqr     ,2,1);
+    layout->addWidget(labelSquare            ,2,0);
+    layout->addWidget(m_checkBoxSqr          ,2,1);
 
     // assign layout to group box
     m_ctrlGrp->setLayout(layout);
@@ -150,27 +149,27 @@ Blur_Sharpen::controlPanel()
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::changeFilterX:
+// Blur::changeFilterX:
 //
 // Slot to process change in filter width.
 //
 void
-Blur_Sharpen::changeFilterX(int xsz)
+Blur::changeFilterX(int xsz)
 {
     if(!(xsz & 1)){//if ysz is even
         --xsz;
     }
-    m_sliderFilterX     ->  blockSignals(true);
-    m_sliderFilterX     ->  setValue    (xsz );
-    m_sliderFilterX     ->  blockSignals(false);
-    m_spinBoxFilterX    ->  blockSignals(true);
-    m_spinBoxFilterX    ->  setValue    (xsz );
-    m_spinBoxFilterX    ->  blockSignals(false);
+    m_sliderFilterWidth     ->  blockSignals(true);
+    m_sliderFilterWidth     ->  setValue    (xsz );
+    m_sliderFilterWidth     ->  blockSignals(false);
+    m_spinBoxFilterWidth    ->  blockSignals(true);
+    m_spinBoxFilterWidth    ->  setValue    (xsz );
+    m_spinBoxFilterWidth    ->  blockSignals(false);
 
     if(m_checkBoxSqr->isChecked())
     {
-        m_sliderFilterY ->  setValue(xsz);
-        m_sliderFilterY ->  setValue(xsz);
+        m_sliderFilterHeight ->  setValue(xsz);
+        m_sliderFilterHeight ->  setValue(xsz);
     }
 
     // apply filter to source image; save result in destination image
@@ -183,28 +182,28 @@ Blur_Sharpen::changeFilterX(int xsz)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::changeFilterY:
+// Blur::changeFilterY:
 //
 // Slot to process change in filter height.
 //
 void
-Blur_Sharpen::changeFilterY(int ysz)
+Blur::changeFilterY(int ysz)
 {
 
     if(!(ysz & 1)){//if ysz is even
         --ysz;
     }
-    m_sliderFilterY     ->  blockSignals(true);
-    m_sliderFilterY     ->  setValue    (ysz );
-    m_spinBoxFilterY    ->  blockSignals(true);
-    m_spinBoxFilterY    ->  setValue    (ysz );
-    m_spinBoxFilterY    ->  blockSignals(false);
-    m_sliderFilterY     ->  blockSignals(false);
+    m_sliderFilterHeight     ->  blockSignals(true);
+    m_sliderFilterHeight     ->  setValue    (ysz );
+    m_spinBoxFilterHeight    ->  blockSignals(true);
+    m_spinBoxFilterHeight    ->  setValue    (ysz );
+    m_spinBoxFilterHeight    ->  blockSignals(false);
+    m_sliderFilterHeight     ->  blockSignals(false);
 
     if(m_checkBoxSqr->isChecked())
     {
-        m_sliderFilterX ->  setValue(ysz);
-        m_sliderFilterX ->  setValue(ysz);
+        m_sliderFilterWidth ->  setValue(ysz);
+        m_sliderFilterWidth ->  setValue(ysz);
     }
 
     // apply filter to source image; save result in destination image
@@ -216,14 +215,14 @@ Blur_Sharpen::changeFilterY(int ysz)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::toggleSquare:
+// Blur::toggleSquare:
 //
 //
-void Blur_Sharpen::toggleSquare(int e)
+void Blur::toggleSquare(int e)
 {
     if(e)
     {
-        m_sliderFilterY->setValue(m_sliderFilterX->value());
+        m_sliderFilterHeight->setValue(m_sliderFilterWidth->value());
     }
 
     // apply filter to source image; save result in destination image
@@ -235,18 +234,17 @@ void Blur_Sharpen::toggleSquare(int e)
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::blur:
+// Blur::blur:
 //
-// Performs a linear blur
+// Performs a box blur
 //
-//! \brief	Threshold I1 using the 3-level mapping shown below.
-//! \details	Output is in I2. val<t1: g1; t1<=val<t2: g2; t2<=val: g3
+//! \brief	Blurs I1 using a averge filter of size xsz*ysz .
 //! \param[in]	in  - Input image.
 //! \param[in]	xsz - Filter width.
 //! \param[in]	ysz - Filter height.
 //! \param[out]	out  - Output image.
 //
-void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
+void Blur::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 
 
     IP_copyImageHeader(in,out);
@@ -451,22 +449,34 @@ void Blur_Sharpen::blur(ImagePtr in, int xsz, int ysz, ImagePtr out){
 }
 
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::sharpen:
-//
-//
-//void Blur_Sharpen::sharpen(ImagePtr in, int sz, ImagePtr out){
-
-
-//}
-
-
-
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Blur_Sharpen::reset:
+// Blur::reset:
 //
 // Reset parameters.
 //
 void
-Blur_Sharpen::reset() {}
+Blur::reset() {
+
+    m_spinBoxFilterWidth->blockSignals(true);
+    m_sliderFilterWidth ->blockSignals(true);
+    m_spinBoxFilterHeight ->blockSignals(true);
+    m_sliderFilterHeight ->blockSignals(true);
+    m_checkBoxSqr->blockSignals(true);
+
+    m_spinBoxFilterWidth ->setValue  (m_minFilterDim);
+    m_sliderFilterWidth ->setValue  (m_minFilterDim);
+    m_spinBoxFilterHeight ->setValue  (m_minFilterDim);
+    m_sliderFilterHeight ->setValue  (m_minFilterDim);
+    m_checkBoxSqr->setChecked(true);
+
+    m_spinBoxFilterWidth->blockSignals(false);
+    m_sliderFilterWidth ->blockSignals(false);
+    m_spinBoxFilterHeight ->blockSignals(false);
+    m_sliderFilterHeight ->blockSignals(false);
+    m_checkBoxSqr->blockSignals(false);
+
+    applyFilter(g_mainWindowP->imageSrc(), g_mainWindowP->imageDst());
+
+    // display output
+    g_mainWindowP->displayOut();
+}

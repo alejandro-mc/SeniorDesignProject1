@@ -14,13 +14,13 @@
 #include "Quantize.h"
 #include "HistStretch.h"
 #include "HistMatch.h"
-#include "Blur_Sharpen.h"
+#include "Blur.h"
 #include "Median.h"
 #include "Sharpen.h"
 
 using namespace IP;
 
-enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,HISTMATCH,BLURSHARPEN,SHARPEN,MEDIAN};
+enum {DUMMY, THRESHOLD, CONTRAST,QUANTIZE, HISTSTRETCH,HISTMATCH,BLUR,SHARPEN,MEDIAN};
 enum {RGB, R, G, B, GRAY};
 
 QString GroupBoxStyle = "QGroupBox {				\
@@ -102,9 +102,9 @@ MainWindow::createActions()
     //Neigborhood Ops Actions
     ///////////////////////////////////
 
-    m_actionBlurSharpen = new QAction("&Blur/Sharpen",this);
+    m_actionBlurSharpen = new QAction("&Blur",this);
     m_actionBlurSharpen ->setShortcut(tr("Ctrl+B"));
-    m_actionBlurSharpen ->setData(BLURSHARPEN);
+    m_actionBlurSharpen ->setData(BLUR);
 
     m_actionSharpen = new QAction("&Sharpen",this);
     m_actionSharpen ->setShortcut(tr("Ctrl+S"));
@@ -200,7 +200,7 @@ MainWindow::createGroupPanel()
     m_imageFilterType[QUANTIZE ]    =   new Quantize;
     m_imageFilterType[HISTSTRETCH]  =   new HistStretch;
     m_imageFilterType[HISTMATCH]    =   new HistMatch;
-    m_imageFilterType[BLURSHARPEN]  =   new Blur_Sharpen;
+    m_imageFilterType[BLUR]         =   new Blur;
     m_imageFilterType[SHARPEN]      =   new Sharpen;
     m_imageFilterType[MEDIAN]       =   new Median;
 
@@ -214,7 +214,7 @@ MainWindow::createGroupPanel()
     m_stackWidgetPanels->addWidget(m_imageFilterType[QUANTIZE ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTSTRETCH ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[HISTMATCH ]->controlPanel());
-    m_stackWidgetPanels->addWidget(m_imageFilterType[BLURSHARPEN ]->controlPanel());
+    m_stackWidgetPanels->addWidget(m_imageFilterType[BLUR ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[SHARPEN ]->controlPanel());
     m_stackWidgetPanels->addWidget(m_imageFilterType[MEDIAN ]->controlPanel());
 
@@ -427,7 +427,7 @@ void
 MainWindow::reset()
 {
 
-//	m_imageFilterType[ m_imageFilterName[index] ]->reset();
+    m_imageFilterType[m_code]->reset();
 }
 
 
