@@ -67,7 +67,7 @@ QGroupBox*
 Sharpen::controlPanel()
 {
     // init group box
-    m_ctrlGrp = new QGroupBox("Blur");
+    m_ctrlGrp = new QGroupBox("Sharpen");
 
     // init widgets
     // create label x
